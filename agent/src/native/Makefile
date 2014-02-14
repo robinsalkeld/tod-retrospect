@@ -40,11 +40,11 @@ ifeq ($(PLATFORM), macos)
 	SHARED_MAGIC = -dynamiclib
 	STATIC_MAGIC = 
 	
-	CXXFLAGS += -Wno-long-double
+	#CXXFLAGS += -Wno-long-double
 
-	CXXFLAGS14 += -I$(JAVA14_HOME)/Headers/ 
-	CXXFLAGS15 += -I$(JAVA15_HOME)/Headers/ 
-	
+	CXXFLAGS14 += -I$(JAVA14_HOME)/include/ -I$(JAVA14_HOME)/include/darwin/
+    CXXFLAGS15 += -I$(JAVA15_HOME)/include/ -I$(JAVA15_HOME)/include/darwin/
+    
 	CXXFLAGS += $(MACOS_ARCH)
 	LDFLAGS += $(MACOS_ARCH)
 

@@ -66,7 +66,7 @@
 	<variableList>
 		<variable>
 			<name>GIT_HOME</name>
-			<value>$%7BPARENT-1-WORKSPACE_LOC%7D/git</value>
+			<value>$%7BPARENT-2-PROJECT_LOC%7D</value>
 		</variable>
 	</variableList>
 </projectDescription>

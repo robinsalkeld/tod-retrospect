@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
-<plugin>
+<plugin id="tod.plugin" name="TOD" version="0.9">
    <extension-point id="SourceRevealer" name="Source Revealer" schema="schema/SourceRevealer.exsd"/>
    <extension-point id="ActionsForEvent" name="Actions for events" schema="schema/ActionsForEvent.exsd"/>
 
