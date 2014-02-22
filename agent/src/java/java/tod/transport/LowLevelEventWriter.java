@@ -50,6 +50,7 @@ import java.tod._LowLevelEventType;
 import java.tod._Output;
 import java.tod._ValueType;
 import java.tod.io._IO;
+import java.util.IdentityHashMap;
 
 import tod.agent.Command;
 import tod.agent.io._ByteBuffer;
@@ -85,6 +86,11 @@ public class LowLevelEventWriter
 	private RegisteredRefObjectsStack itsRegisteredRefObjectsStack = new RegisteredRefObjectsStack();
 	
 	private _GrowingByteBuffer itsObjectsBuffer = _GrowingByteBuffer.allocate(1024);
+	
+	/**
+	 * Set of objects we have seen the instantiation event for.
+	 */
+	private static final IdentityHashMap<Object, Void> instantiatedObjects = new IdentityHashMap<Object, Void>();
 	
 	public LowLevelEventWriter(PacketBuffer aStream)
 	{
@@ -414,6 +420,10 @@ public class LowLevelEventWriter
 	{
 		sendStd(BEFORE_CALL, aTimestamp);
 
+		if (aCallType == _BehaviorCallType.INSTANTIATION) {
+		    markInstantiated(aTarget);
+		}
+		
 		itsBuffer.putInt(aProbeId);
 		itsBuffer.putInt(aBehaviorId);
 		sendCallType(itsBuffer, aCallType);
@@ -479,7 +489,7 @@ public class LowLevelEventWriter
 	 */
 	public static boolean shouldSendByValue(Object aObject)
 	{
-		return (aObject instanceof String) || (aObject instanceof Throwable);
+		return (aObject instanceof String) || (aObject instanceof Throwable); // || !instantiated(aObject);
 	}
 
 	/**
@@ -490,13 +500,24 @@ public class LowLevelEventWriter
 		return (aObject instanceof String);
 	}
 	
+	public static synchronized void markInstantiated(Object aObject) {
+	    instantiatedObjects.put(aObject, null);
+	}
+	
+	public static synchronized boolean instantiated(Object aObject) {
+	    return instantiatedObjects.containsKey(aObject);
+	}
+	
 	public void sendThread(
+	                long aTimestamp,
 			long aJVMThreadId,
+			Thread thread,
 			String aName) 
 	{
 		sendEventType(itsBuffer, REGISTER_THREAD);
 
 		itsBuffer.putLong(aJVMThreadId);
+		sendValue(itsBuffer, thread, aTimestamp);
 		sendString(itsBuffer, aName);
 
 		copyBuffer();

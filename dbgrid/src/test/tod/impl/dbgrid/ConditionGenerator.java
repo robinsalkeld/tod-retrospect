@@ -133,7 +133,7 @@ public final class ConditionGenerator
 	
 	protected IThreadInfo genThread()
 	{
-		return new ThreadInfo(null, itsIdGenerator.genThreadId(), 0, null);
+		return new ThreadInfo(null, itsIdGenerator.genThreadId(), 0, null, null);
 	}
 	
 	protected LocalVariableInfo genVariable()

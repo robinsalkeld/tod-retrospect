@@ -23,6 +23,7 @@ RSA Data Security, Inc. MD5 Message-Digest Algorithm".
 package tod.impl.database.structure.standard;
 
 import tod.core.ILogCollector;
+import tod.core.database.structure.IArrayTypeInfo;
 import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IMutableFieldInfo;
 import tod.core.database.structure.IShareableStructureDatabase;
@@ -43,6 +44,8 @@ public class FieldInfo extends MemberInfo implements IMutableFieldInfo
 	 */
 	private final int itsTypeId;
 
+	private final int arrayTypeDimensions;
+	
 	public FieldInfo(
 			IShareableStructureDatabase aDatabase, 
 			int aId, 
@@ -52,6 +55,13 @@ public class FieldInfo extends MemberInfo implements IMutableFieldInfo
 			boolean aStatic)
 	{
 		super(aDatabase, aId, aDeclaringType, aName, aStatic);
+		if (aType instanceof IArrayTypeInfo) {
+		    IArrayTypeInfo arrayType = (IArrayTypeInfo)aType;
+		    aType = arrayType.getElementType();
+		    arrayTypeDimensions = arrayType.getDimensions();
+		} else {
+		    arrayTypeDimensions = 0;
+		}
 		itsTypeId = aType.getId();
 	}
 
@@ -63,7 +73,11 @@ public class FieldInfo extends MemberInfo implements IMutableFieldInfo
 	
 	public ITypeInfo getType()
 	{
-		return getDatabase().getType(itsTypeId, true);
+	        ITypeInfo result = getDatabase().getType(itsTypeId, true);
+	        if (arrayTypeDimensions > 0) {
+	            result = getDatabase().getArrayType(result, arrayTypeDimensions);
+	        }
+	        return result;
 	}
 
 	@Override

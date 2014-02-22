@@ -41,6 +41,11 @@ public interface IThreadInfo
 	 */
 	public long getJVMId();
 
+	/**
+	 * Returns the id of the thread object
+	 */
+	public ObjectId getObjectId();
+	
 	public String getName();
 	
 	/**

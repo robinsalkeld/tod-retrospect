@@ -34,6 +34,7 @@ import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IStructureDatabase;
 import tod.core.database.structure.IThreadInfo;
 import tod.core.database.structure.IStructureDatabase.ProbeInfo;
+import tod.core.database.structure.ObjectId;
 import tod.impl.database.structure.standard.ThreadInfo;
 import zz.utils.Utils;
 
@@ -94,9 +95,9 @@ public abstract class EventCollector implements ILogCollector
 		return itsThreads;
 	}
 
-	public void thread(int aThreadId, long aJVMThreadId, String aName)
+	public void thread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
-		ThreadInfo theThread = createThreadInfo(getHost(), aThreadId, aJVMThreadId, aName);
+		ThreadInfo theThread = createThreadInfo(getHost(), aThreadId, aJVMThreadId, aThread, aName);
 		Utils.listSet(itsThreads, aThreadId, theThread);
 		itsThreadsMap.put(aJVMThreadId, theThread);
 		
@@ -115,9 +116,9 @@ public abstract class EventCollector implements ILogCollector
 	 * Instantiates a {@link ThreadInfo} object. Subclasses can override this 
 	 * method if they need to instantiate a subclass.
 	 */
-	protected ThreadInfo createThreadInfo(IHostInfo aHost, int aId, long aJVMId, String aName)
+	protected ThreadInfo createThreadInfo(IHostInfo aHost, int aId, long aJVMId, Object aObjId, String aName)
 	{
-		return new ThreadInfo(aHost, aId, aJVMId, aName);
+		return new ThreadInfo(aHost, aId, aJVMId, (ObjectId)aObjId, aName);
 	}
 	
 	/**

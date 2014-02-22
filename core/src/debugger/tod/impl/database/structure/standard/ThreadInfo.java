@@ -27,6 +27,7 @@ import java.io.Serializable;
 import tod.core.ILogCollector;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IThreadInfo;
+import tod.core.database.structure.ObjectId;
 
 
 /**
@@ -39,13 +40,15 @@ public class ThreadInfo implements IThreadInfo, Serializable
 	private IHostInfo itsHost;
 	private int itsId;
 	private long itsJVMId;
+	private ObjectId itsObjId;
 	private String itsName;
 	
-	public ThreadInfo(IHostInfo aHost, int aId, long aJVMId, String aName)
+	public ThreadInfo(IHostInfo aHost, int aId, long aJVMId, ObjectId aObjId, String aName)
 	{
 		itsHost = aHost;
 		itsId = aId;
 		itsJVMId = aJVMId;
+		itsObjId = aObjId;
 		itsName = aName;
 	}
 
@@ -64,6 +67,10 @@ public class ThreadInfo implements IThreadInfo, Serializable
 		return itsHost;
 	}
 
+	public ObjectId getObjectId() {
+	    return itsObjId;
+	}
+	
 	public String getName()
 	{
 		return itsName;

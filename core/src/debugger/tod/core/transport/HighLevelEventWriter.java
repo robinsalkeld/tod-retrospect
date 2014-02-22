@@ -399,13 +399,16 @@ public class HighLevelEventWriter
 
 
 	public void sendThread(
+	                long aTimestamp,
 			int aThreadId, 
 			long aJVMThreadId,
+			Thread aThread,
 			String aName) throws IOException
 	{
 		sendMessageType(itsBuffer, HighLevelEventType.REGISTER_THREAD); 
 		itsBuffer.writeInt(aThreadId);
 		itsBuffer.writeLong(aJVMThreadId);
+		sendValue(itsBuffer, aThread, aTimestamp);
 		itsBuffer.writeUTF(aName);
 
 //		itsBuffer.send(HighLevelEventType.REGISTER_THREAD);

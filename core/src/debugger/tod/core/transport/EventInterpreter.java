@@ -134,10 +134,10 @@ public final class EventInterpreter implements ILowLevelCollector
 	}
 
 	
-	public void registerThread(int aThreadId, long aJVMThreadId, String aName)
+	public void registerThread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
 		Utils.listSet(itsThreads, aThreadId, new ThreadData(aThreadId));
-		itsCollector.thread(aThreadId, aJVMThreadId, aName);
+		itsCollector.thread(aThreadId, aJVMThreadId, aThread, aName);
 	}
 	
 

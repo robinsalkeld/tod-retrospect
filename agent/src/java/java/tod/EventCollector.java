@@ -183,7 +183,7 @@ public final class EventCollector
 		if (theThreadData.isSending()) throw new RuntimeException();
 		
     	LowLevelEventWriter theWriter = theThreadData.packetStart(0);
-    	theWriter.sendThread(theJvmId, theCurrentThread.getName());
+    	theWriter.sendThread(theThreadData.timestamp(), theJvmId, theCurrentThread, theCurrentThread.getName());
         theThreadData.packetEnd();
         
 		return theThreadData;

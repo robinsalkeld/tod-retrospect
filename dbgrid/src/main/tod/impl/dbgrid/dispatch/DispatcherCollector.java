@@ -328,7 +328,7 @@ public class DispatcherCollector implements ILogCollector
 		throw new UnsupportedOperationException();
 	}
 
-	public void thread(int aThreadId, long aJVMThreadId, String aName)
+	public void thread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
 		throw new UnsupportedOperationException();
 	}

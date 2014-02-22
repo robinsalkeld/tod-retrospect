@@ -51,11 +51,11 @@ public abstract class GridEventCollector extends EventCollector
 	}
 
 	@Override
-	public void thread(int aThreadId, long aJVMThreadId, String aName)
+	public void thread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
 		if (itsMaster != null)
 		{
-			ThreadInfo theThread = createThreadInfo(getHost(), aThreadId, aJVMThreadId, aName);
+			ThreadInfo theThread = createThreadInfo(getHost(), aThreadId, aJVMThreadId, aThread, aName);
 			itsMaster.registerThread(theThread);
 		}
 		else throw new UnsupportedOperationException("Should have been filtered by master");		

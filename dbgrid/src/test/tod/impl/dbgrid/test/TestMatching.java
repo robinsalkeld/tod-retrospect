@@ -67,7 +67,7 @@ public class TestMatching
 		
 		// Fill event database
 		ILogCollector theCollector = MASTER._getCollector();
-		theCollector.thread(0, 0, "test");
+		theCollector.thread(0, 0, null, "test");
 		theCollector.methodCall(0, 0, (short) 0, 0, null, 0, false, 1, 1, null, new Object[] {new ObjectId(5), new ObjectId(5)});
 		theCollector.flush();
 		
@@ -96,7 +96,7 @@ public class TestMatching
 
 		// Fill event database
 		ILogCollector theCollector = MASTER._getCollector();
-		theCollector.thread(0, 0, "test");
+		theCollector.thread(0, 0, null, "test");
 		
 		ObjectId o1 = new ObjectId(1);
 		ObjectId o5 = new ObjectId(5);

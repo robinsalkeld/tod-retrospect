@@ -75,7 +75,7 @@ public class ObjectDecoder
 		case ObjectValue.TYPE_CHAR: return _ByteBuffer.getCharL(aStream);
 		case ObjectValue.TYPE_FLOAT: return Float.intBitsToFloat(_ByteBuffer.getIntL(aStream));
 		case ObjectValue.TYPE_DOUBLE: return Double.longBitsToDouble(_ByteBuffer.getLongL(aStream));
-		case ObjectValue.TYPE_BOOLEAN: return aStream.readChar() != 0;
+		case ObjectValue.TYPE_BOOLEAN: return aStream.readByte() != 0;
 		case ObjectValue.TYPE_OBJECTID: return new ObjectId(aStream.readLong());
 		case ObjectValue.TYPE_VALUE: return readObjectValue(aStream, aMapping); 
 		case ObjectValue.TYPE_REF:

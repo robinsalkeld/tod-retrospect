@@ -80,7 +80,7 @@ public class TestGridMaster
 			
 			for (int j=1;j<=100;j++)
 			{
-				theMaster.registerThread(new ThreadInfo(theHostInfo, j, j, ""+j));
+				theMaster.registerThread(new ThreadInfo(theHostInfo, j, j, null, ""+j));
 			}
 			
 //			IMutableClassInfo theClass = theStructureDatabase.getNewClass("C"+i);

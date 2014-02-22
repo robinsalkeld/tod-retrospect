@@ -318,6 +318,7 @@ public class HighLevelEventReader
 		aCollector.thread(
 				aStream.readInt(),
 				aStream.readLong(),
+				readValue(aStream),
 				aStream.readUTF());
 	}
 

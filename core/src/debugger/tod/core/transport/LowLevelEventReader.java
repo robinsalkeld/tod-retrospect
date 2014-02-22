@@ -142,6 +142,7 @@ public class LowLevelEventReader
 		aCollector.registerThread(
 				aThreadId, 
 				aStream.readLong(), 
+				readValue(aStream),
 				aStream.readUTF());
 	}
 

@@ -98,7 +98,7 @@ public class DummyCollector implements ILogCollector
 	{
 	}
 
-	public void thread(int aThreadId, long aJVMThreadId, String aName)
+	public void thread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
 	}
 

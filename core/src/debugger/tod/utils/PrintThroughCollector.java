@@ -391,9 +391,9 @@ public class PrintThroughCollector implements ILogCollector
 		itsCollector.registerRefObject(aId, aTimestamp, aClassId);
 	}
 
-	public void thread(int aThreadId, long aJVMThreadId, String aName)
+	public void thread(int aThreadId, long aJVMThreadId, Object aThread, String aName)
 	{
-		itsCollector.thread(aThreadId, aJVMThreadId, aName);
+		itsCollector.thread(aThreadId, aJVMThreadId, aThread, aName);
 	}
 
 	public void clear()

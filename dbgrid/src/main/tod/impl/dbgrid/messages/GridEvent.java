@@ -97,7 +97,7 @@ implements Serializable
 		// This is the case when using PredicateCondition.
 		IThreadInfo theThread = aBrowser != null ?
 				((GridLogBrowser) aBrowser).getThread(getThread())
-				: new ThreadInfo(null, getThread(), 0, "Unknown");
+				: new ThreadInfo(null, getThread(), 0, null, "Unknown");
 				
 		aEvent.setThread(theThread);
 		aEvent.setTimestamp(getTimestamp());

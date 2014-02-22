@@ -34,6 +34,7 @@ import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.ITypeInfo;
 import tod.core.database.structure.IStructureDatabase.LocalVariableInfo;
 import tod.core.database.structure.IStructureDatabase.ProbeInfo;
+import tod.core.database.structure.ObjectId;
 import tod.core.transport.ObjectDecoder;
 import tod.core.transport.ValueReader;
 import tod.impl.common.EventCollector;
@@ -92,9 +93,9 @@ public class LocalCollector extends EventCollector
 	}
 	
 	@Override
-	protected ThreadInfo createThreadInfo(IHostInfo aHost, int aId, long aJVMId, String aName)
+	protected ThreadInfo createThreadInfo(IHostInfo aHost, int aId, long aJVMId, Object aObjId, String aName)
 	{
-		return new LocalThreadInfo(aHost, aId, aJVMId, aName);
+		return new LocalThreadInfo(aHost, aId, aJVMId, (ObjectId)aObjId, aName);
 	}
 	
 	@Override
@@ -441,9 +442,9 @@ public class LocalCollector extends EventCollector
 	{
 		private Stack<BehaviorCallEvent> itsParentsStack = new ArrayStack<BehaviorCallEvent>();
 
-		public LocalThreadInfo(IHostInfo aHost, int aId, long aJVMId, String aName)
+		public LocalThreadInfo(IHostInfo aHost, int aId, long aJVMId, ObjectId aObjId, String aName)
 		{
-			super(aHost, aId, aJVMId, aName);
+			super(aHost, aId, aJVMId, aObjId, aName);
 		}
 		
 		public void pushParent(BehaviorCallEvent aEvent)

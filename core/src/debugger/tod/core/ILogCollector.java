@@ -169,6 +169,7 @@ public interface ILogCollector
 	public void thread(
 			int aThreadId, 
 			long aJVMThreadId,
+			Object aThread,
 			String aName);
 	
 	/**
