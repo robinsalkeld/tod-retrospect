@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import tod.agent.ObjectValue;
 import tod.core.database.browser.ICompoundFilter;
 import tod.core.database.browser.IEventBrowser;
 import tod.core.database.browser.IEventFilter;
@@ -37,11 +38,14 @@ import tod.core.database.event.ExternalPointer;
 import tod.core.database.event.IBehaviorCallEvent;
 import tod.core.database.event.ILogEvent;
 import tod.core.database.event.IParentEvent;
+import tod.core.database.structure.IArrayTypeInfo;
 import tod.core.database.structure.IBehaviorInfo;
 import tod.core.database.structure.IClassInfo;
+import tod.core.database.structure.IFieldInfo;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IStructureDatabase;
 import tod.core.database.structure.IThreadInfo;
+import tod.core.database.structure.ITypeInfo;
 import tod.core.database.structure.ObjectId;
 import tod.core.session.ISession;
 import tod.impl.common.LogBrowserUtils;
@@ -191,11 +195,50 @@ implements ILogBrowser, IScheduled
 	
 	public Object getRegistered(ObjectId aId)
 	{
-		Decodable theDecodable = itsMaster.getRegisteredObject(aId.getId());
-		return theDecodable != null ? theDecodable.decode() : null;
+		Object result = getRegisteredInternal(aId.getId());
+		if (result != null && itsMaster.getObjectType(aId.getId()).getName().equals(Class.class.getName())) {
+		    result = ((Object[])result)[0];
+		}
+		return result;
 	}
 
-	public long getEventsCount()
+	private Object getRegisteredInternal(long aId)
+	{
+	        Decodable theDecodable = itsMaster.getRegisteredObject(aId);
+                return theDecodable != null ? theDecodable.decode() : null;
+	}
+	
+	public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField) 
+	{
+	        ObjectValue initialState = null;
+	        if (aField.isStatic()) {
+	            ITypeInfo type = aField.getDeclaringType();
+	            Object[] registered = (Object[])getRegisteredInternal(type.getId());
+	            if (registered != null) {
+                        initialState = (ObjectValue)registered[1];
+	            }
+	        } else {
+	            initialState = (ObjectValue)getRegisteredInternal(aObjectId.getId());
+	        }
+	        
+	        if (initialState != null) {
+	            return initialState.getFieldValue(aField.getName());
+	        } else {
+	            return aField.getType().getDefaultInitialValue();
+	        }
+	}
+
+	public Object getInitialArrayValue(ObjectId aObjectId, int index) {
+                Object[] initialState = (Object[])getRegisteredInternal(aObjectId.getId());
+                if (initialState != null) {
+                    return initialState[index];
+                } else {
+                    IArrayTypeInfo type = (IArrayTypeInfo)itsMaster.getObjectType(aObjectId.getId());
+                    return type.getElementType().getDefaultInitialValue();
+                }
+	}
+	
+        public long getEventsCount()
 	{
 		if (itsEventsCount == 0) updateStats(); 
 		return itsEventsCount;

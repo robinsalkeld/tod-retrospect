@@ -41,10 +41,11 @@ import static java.tod._LowLevelEventType.NEW_ARRAY;
 import static java.tod._LowLevelEventType.REGISTER_OBJECT;
 import static java.tod._LowLevelEventType.REGISTER_THREAD;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.tod.EventCollector;
 import java.tod.ExceptionGeneratedReceiver;
 import java.tod.ObjectIdentity;
-import java.tod.ObjectValueFactory;
 import java.tod._BehaviorCallType;
 import java.tod._LowLevelEventType;
 import java.tod._Output;
@@ -53,8 +54,11 @@ import java.tod.io._IO;
 import java.util.IdentityHashMap;
 
 import tod.agent.Command;
+import tod.agent.ObjectValue;
+import tod.agent.ObjectValue.FieldValue;
 import tod.agent.io._ByteBuffer;
 import tod.agent.io._GrowingByteBuffer;
+import tod.agent.util._ArrayList;
 
 /**
  * Provides the methods used to encode streamed log data. Non-static methods are
@@ -489,7 +493,7 @@ public class LowLevelEventWriter
 	 */
 	public static boolean shouldSendByValue(Object aObject)
 	{
-		return (aObject instanceof String) || (aObject instanceof Throwable); // || !instantiated(aObject);
+		return (aObject instanceof String) || (aObject instanceof Throwable) || !instantiated(aObject);
 	}
 
 	/**
@@ -663,6 +667,9 @@ public class LowLevelEventWriter
 				// _IO.out("Deferring: "+aObject+", id:
 				// "+theObjectId+", p.ts: "+aDefer);
 			}
+			
+			// Also send a reference so that the object's type is registered
+			itsRegisteredRefObjectsStack.push(aObject, theObjectId, aObject.getClass(), aTimestamp);
 		}
 
 		sendValueType(aBuffer, _ValueType.OBJECT_UID);
@@ -720,7 +727,16 @@ public class LowLevelEventWriter
 		itsObjectsBuffer.clear();
 		itsObjectsBuffer.position(22); // Header placeholder
 		
-		ObjectEncoder.encode(ObjectValueFactory.convert(aObject), itsObjectsBuffer);
+		if (false && aObject instanceof Object[]) {
+		    sendArray(itsObjectsBuffer, (Object[])aObject, aTimestamp);
+//		} else if (aObject instanceof Class<?>) {
+//		    itsObjectsBuffer.put(ObjectValue.TYPE_BYTE);
+//		    itsObjectsBuffer.putInt(2);
+//                    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
+//		    sendObjectValue(itsObjectsBuffer, null, (Class<?>)aObject, aTimestamp);
+		} else {
+		    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
+		}
 		
 		int theSize = itsObjectsBuffer.position()-5; // 5: event type + size 
 	
@@ -735,6 +751,62 @@ public class LowLevelEventWriter
 		itsStream.write(itsObjectsBuffer.array(), theSize+5, true);
 	}
 	
+	private void sendArray(_ByteBuffer aBuffer, Object[] anArray, long aTimestamp) {
+	    aBuffer.put(ObjectValue.TYPE_ARRAY);
+	    
+	    aBuffer.putInt(anArray.length);
+	    for (int i = 0; i < anArray.length; i++) {
+	        sendValue(aBuffer, anArray[i], aTimestamp);
+	    }
+	}
+	
+	private void sendObjectValue(_ByteBuffer aBuffer, Object aObject, Class<?> aClass, long aTimestamp) {
+	    aBuffer.put(ObjectValue.TYPE_VALUE);
+                
+            aBuffer.putString(aClass.getName());
+            aBuffer.put(aObject instanceof Throwable ? (byte) 1 : (byte) 0);
+            
+            _ArrayList<FieldValue> theFieldValues = new _ArrayList<FieldValue>();
+            boolean staticFields = aObject == null;
+            
+            while (aClass != null)
+            {
+                    Field[] theFields = aClass.getDeclaredFields();
+                    for (Field theField : theFields)
+                    {
+                            if (Modifier.isStatic(theField.getModifiers()) != staticFields) {
+                                continue;
+                            }
+                        
+                            boolean theWasAccessible = theField.isAccessible();
+                            theField.setAccessible(true);
+
+                            Object theValue;
+                            try
+                            {
+                                    theValue = theField.get(aObject);
+                            }
+                            catch (Exception e)
+                            {
+                                    theValue = "Cannot obtain field value: "+e.getMessage();
+                            }
+                            
+                            theField.setAccessible(theWasAccessible);
+                            
+                            theFieldValues.add(new FieldValue(theField.getName(), theValue));
+                    }
+                    
+                    aClass = aClass.getSuperclass();
+            }
+            
+            aBuffer.putInt(theFieldValues.size());
+            for(FieldValue theField : theFieldValues.toArray(new FieldValue[theFieldValues.size()]))
+            {
+                    aBuffer.putString(theField.fieldName);
+                    sendValue(aBuffer, theField.value, aTimestamp);
+            }
+	}
+	
 	private void sendRegisteredRefObject(Object aObject, long aId, Class<?> aClass, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
@@ -742,9 +814,9 @@ public class LowLevelEventWriter
 		{
 			// We have to register it explicitly now otherwise the system thinks it
 			// is already registered because it has an id.
-			sendRegisterClass(aId, (Class<?>) aObject);
+			sendRegisterClass(aId, (Class<?>) aObject, aTimestamp);
 		}
-		long theClassId = getClassId(aClass); 
+		long theClassId = getClassId(aClass, aTimestamp); 
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_REFOBJECT);
 		
@@ -755,7 +827,7 @@ public class LowLevelEventWriter
 		copyBuffer();
 	}
 	
-	private long getClassId(Class<?> aClass) 
+	private long getClassId(Class<?> aClass, long aTimestamp) 
 	{
 		long theId = ObjectIdentity.get(aClass);
 		assert theId != 0;
@@ -763,16 +835,16 @@ public class LowLevelEventWriter
 		if (theId < 0)
 		{
 			theId = -theId;
-			sendRegisterClass(theId, aClass);
+			sendRegisterClass(theId, aClass, aTimestamp);
 		}
 		
 		return theId;
 	}
 	
-	private void sendRegisterClass(long aClassId, Class<?> aClass) 
+	private void sendRegisterClass(long aClassId, Class<?> aClass, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
-		long theLoaderId = getClassLoaderId(aClass.getClassLoader());
+		long theLoaderId = getClassLoaderId(aClass.getClassLoader(), aTimestamp);
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_CLASS);
 		
@@ -784,9 +856,14 @@ public class LowLevelEventWriter
 		for(int i=0;i<theName.length();i++) itsBuffer.putChar(theName.charAt(i));
 		
 		copyBuffer();
+		
+		// Also send the initial state of the class' static fields
+//		sendObjectByValue(itsBuffer, aClass, aTimestamp, -1);
+//		
+//		sendRegisteredObjects();
 	}
 	
-	private long getClassLoaderId(ClassLoader aLoader) 
+	private long getClassLoaderId(ClassLoader aLoader, long aTimestamp) 
 	{
 		if (aLoader == null) return 0;
 		
@@ -796,16 +873,16 @@ public class LowLevelEventWriter
 		if (theId < 0)
 		{
 			theId = -theId;
-			sendRegisterClassLoader(theId, aLoader);
+			sendRegisterClassLoader(theId, aLoader, aTimestamp);
 		}
 		
 		return theId;
 	}
 	
-	private void sendRegisterClassLoader(long aLoaderId, ClassLoader aLoader) 
+	private void sendRegisterClassLoader(long aLoaderId, ClassLoader aLoader, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
-		long theLoaderClassId = getClassId(aLoader.getClass());
+		long theLoaderClassId = getClassId(aLoader.getClass(), aTimestamp);
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_CLASSLOADER);
 		
@@ -823,35 +900,18 @@ public class LowLevelEventWriter
 	private static class RegisteredObjectsStack
 	{
 		/**
-		 * List of registered objects that must be sent. Note: There is space
-		 * for a hard-coded number of entries that should "be enough for
-		 * everybody".
+		 * List of registered objects that must be sent.
 		 */
-		private final ObjectEntry[] itsObjects = new ObjectEntry[1024];
+		private final _ArrayList<ObjectEntry> itsObjects = new _ArrayList<ObjectEntry>(1024);
 
 		/**
 		 * Number of entries in {@link #itsObjects}.
 		 */
 		private int itsSize = 0;
 
-		public RegisteredObjectsStack()
-		{
-			for (int i = 0; i < itsObjects.length; i++)
-			{
-				itsObjects[i] = new ObjectEntry();
-			}
-		}
-
 		public void push(long aId, Object aObject, long aTimestamp)
 		{
-			//TODO remove this 
-			if (itsSize>= itsObjects.length) {
-				_IO.out("---------TOD---------WARNING");
-				for (int theI = 0; theI < itsObjects.length; theI++)
-					_IO.out(itsObjects[theI].object.getClass() +" ");
-			}
-			
-			itsObjects[itsSize++].set(aId, aObject, aTimestamp);
+			itsObjects.add(new ObjectEntry(aId, aObject, aTimestamp));
 		}
 
 		public boolean isEmpty()
@@ -861,7 +921,7 @@ public class LowLevelEventWriter
 
 		public ObjectEntry pop()
 		{
-			return itsObjects[--itsSize];
+			return itsObjects.remove(itsObjects.size() - 1);
 		}
 	}
 
@@ -871,7 +931,7 @@ public class LowLevelEventWriter
 		public Object object;
 		public long timestamp;
 
-		public void set(long aId, Object aObject, long aTimestamp)
+		public ObjectEntry(long aId, Object aObject, long aTimestamp)
 		{
 			id = aId;
 			object = aObject;
@@ -975,6 +1035,9 @@ public class LowLevelEventWriter
 
 		public void push(Object aObject, long aId, Class<?> aClass, long aTimestamp)
 		{
+		    if (itsSize == itsObjects.length) {
+		        itsSize++;
+		    }
 			itsObjects[itsSize++].set(aObject, aId, aClass, aTimestamp);
 		}
 

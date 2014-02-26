@@ -30,14 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import tod.agent.ObjectValue;
 import tod.core.DebugFlags;
 import tod.core.database.browser.IEventBrowser;
 import tod.core.database.browser.IEventFilter;
 import tod.core.database.browser.IEventPredicate;
 import tod.core.database.browser.ILogBrowser;
+import tod.core.database.browser.ILogBrowser.Query;
 import tod.core.database.browser.IObjectInspector;
 import tod.core.database.browser.LocationUtils;
-import tod.core.database.browser.ILogBrowser.Query;
 import tod.core.database.event.ExternalPointer;
 import tod.core.database.event.IArrayWriteEvent;
 import tod.core.database.event.IBehaviorCallEvent;
@@ -135,7 +136,7 @@ public class ObjectInspector implements IObjectInspector
 	public ICreationEvent getCreationEvent()
 	{
 		if (itsObjectId == null) throw new UnsupportedOperationException("This inspector is for static fields");
-		if (itsCreationEvent == null) 
+		if (!itsCreationEventValid) 
 		{
 			TODUtils.log(1,"[ObjectInspector] Retrieving creation event for object: "+getObject());
 			IEventFilter theFilter = itsLogBrowser.createTargetFilter(getObject());
@@ -156,6 +157,8 @@ public class ObjectInspector implements IObjectInspector
 					break;
 				}
 			}
+			
+			itsCreationEventValid = true;
 		}
 		return itsCreationEvent;
 	}
@@ -170,7 +173,7 @@ public class ObjectInspector implements IObjectInspector
 			if (theCreationEvent != null)
 			{
 				itsType = theCreationEvent.getType();
-			}
+			} 
 			else if (DebugFlags.TRY_GUESS_TYPE)
 			{
 				// Try to guess type
@@ -354,8 +357,8 @@ public class ObjectInspector implements IObjectInspector
 		
 		if (theResult.isEmpty())
 		{
-			// If there is no result, use default initial value (null or 0).
-			theResult.add(new EntryValue(getDelegate().getDefaultInitialValue(aEntry), null));
+		        // Use initial value (null or 0).
+		        theResult.add(new EntryValue(getDelegate().getInitialValue(aEntry), null));
 		}
 		
 		return theResult.toArray(new EntryValue[theResult.size()]);
@@ -469,9 +472,9 @@ public class ObjectInspector implements IObjectInspector
 		public abstract Object[] getNewValue(IEntryInfo aEntry, ILogEvent aEvent);
 		
 		/**
-		 * Returns the default JVM-assigned value for the given entry.
+		 * Returns the initial value for the given entry (i.e. at the time tracing began).
 		 */
-		public abstract Object getDefaultInitialValue(IEntryInfo aEntry);
+		public abstract Object getInitialValue(IEntryInfo aEntry);
 	}
 	
 	private static final Delegate UNAVAILABLE = new Delegate()
@@ -501,7 +504,7 @@ public class ObjectInspector implements IObjectInspector
 		}
 		
 		@Override
-		public Object getDefaultInitialValue(IEntryInfo arg0)
+		public Object getInitialValue(IEntryInfo arg0)
 		{
 			throw new UnsupportedOperationException();
 		}
@@ -510,7 +513,9 @@ public class ObjectInspector implements IObjectInspector
 	private class ObjectDelegate extends Delegate
 	{
 		private List<IEntryInfo> itsFields;
-		
+		private ObjectValue itsInitialState;
+		private boolean itsInitialStateValid = false;
+                
 		/**
 		 * Recursively finds all inherited members of the inspected object.
 		 */
@@ -595,10 +600,10 @@ public class ObjectInspector implements IObjectInspector
 		}
 
 		@Override
-		public Object getDefaultInitialValue(IEntryInfo aEntry)
+		public Object getInitialValue(IEntryInfo aEntry)
 		{
-			FieldEntryInfo theEntry = (FieldEntryInfo) aEntry;
-			return theEntry.getField().getType().getDefaultInitialValue();
+		    FieldEntryInfo theEntry = (FieldEntryInfo) aEntry;
+		    return itsLogBrowser.getInitialFieldValue(itsObjectId, theEntry.getField());
 		}
 	}
 
@@ -705,9 +710,9 @@ public class ObjectInspector implements IObjectInspector
 		}
 		
 		@Override
-		public Object getDefaultInitialValue(IEntryInfo arg0)
+		public Object getInitialValue(IEntryInfo aEntry)
 		{
-			return ((IArrayTypeInfo) getType()).getElementType().getDefaultInitialValue();
+			return itsLogBrowser.getInitialArrayValue(itsObjectId, ((ArraySlotEntryInfo) aEntry).getIndex());
 		}
 	}
 	

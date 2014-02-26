@@ -410,6 +410,16 @@ public class ABCTags
 			throw new UnsupportedOperationException();
 		}
 
+		public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
+		public Object getInitialArrayValue(ObjectId aObjectId, int aIndex)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
 		public Iterable<IThreadInfo> getThreads()
 		{
 			return Collections.EMPTY_LIST;

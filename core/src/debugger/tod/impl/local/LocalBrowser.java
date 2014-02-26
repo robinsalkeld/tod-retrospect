@@ -169,6 +169,16 @@ public class LocalBrowser implements ILogBrowser
 		return itsRegisteredObjects.get(aId.getId());
 	}
 
+	public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField)
+	{
+		throw new UnsupportedOperationException();
+	}
+	
+	public Object getInitialArrayValue(ObjectId aObjectId, int aIndex)
+	{
+		throw new UnsupportedOperationException();
+	}
+	
 	public IEventBrowser createBrowser (IEventFilter aFilter)
 	{
 		AbstractFilter theFilter = (AbstractFilter) aFilter;

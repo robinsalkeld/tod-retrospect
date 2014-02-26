@@ -66,6 +66,18 @@ public class _ArrayList<T>
 		System.arraycopy(itsData, 0, theNewData, 0, itsData.length);
 		itsData = theNewData;
 	}
+	
+	public T remove(int index) {
+            T oldValue = itsData[index];
+    
+            int numMoved = itsSize - index - 1;
+            if (numMoved > 0)
+                System.arraycopy(itsData, index+1, itsData, index,
+                                 numMoved);
+            itsData[--itsSize] = null; // clear to let GC do its work
+    
+            return oldValue;
+        }
 
 	public T[] toArray()
 	{

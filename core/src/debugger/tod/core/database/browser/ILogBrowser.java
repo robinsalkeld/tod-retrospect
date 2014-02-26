@@ -386,4 +386,9 @@ public interface ILogBrowser
 			return false;
 		}
 	}
+	
+	
+	public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField);
+	
+	public Object getInitialArrayValue(ObjectId aObjectId, int index);
 }

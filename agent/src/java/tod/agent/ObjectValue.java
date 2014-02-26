@@ -45,6 +45,7 @@ public class ObjectValue
 	public static final byte TYPE_VALUE = 20;
 	public static final byte TYPE_REF = 21;
 	public static final byte TYPE_NULL = 22;
+	public static final byte TYPE_ARRAY = 23;
 
 	private String itsClassName;
 	private FieldValue[] itsFields;
