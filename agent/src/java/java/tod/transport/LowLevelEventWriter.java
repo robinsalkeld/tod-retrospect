@@ -50,7 +50,6 @@ import java.tod._BehaviorCallType;
 import java.tod._LowLevelEventType;
 import java.tod._Output;
 import java.tod._ValueType;
-import java.tod.io._IO;
 import java.util.IdentityHashMap;
 
 import tod.agent.Command;
@@ -727,13 +726,13 @@ public class LowLevelEventWriter
 		itsObjectsBuffer.clear();
 		itsObjectsBuffer.position(22); // Header placeholder
 		
-		if (false && aObject instanceof Object[]) {
+		if (aObject instanceof Object[]) {
 		    sendArray(itsObjectsBuffer, (Object[])aObject, aTimestamp);
-//		} else if (aObject instanceof Class<?>) {
-//		    itsObjectsBuffer.put(ObjectValue.TYPE_BYTE);
-//		    itsObjectsBuffer.putInt(2);
-//                    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
-//		    sendObjectValue(itsObjectsBuffer, null, (Class<?>)aObject, aTimestamp);
+		} else if (aObject instanceof Class<?>) {
+		    itsObjectsBuffer.put(ObjectValue.TYPE_ARRAY);
+		    itsObjectsBuffer.putInt(2);
+                    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
+		    sendObjectValue(itsObjectsBuffer, null, (Class<?>)aObject, aTimestamp);
 		} else {
 		    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
 		}
@@ -858,9 +857,7 @@ public class LowLevelEventWriter
 		copyBuffer();
 		
 		// Also send the initial state of the class' static fields
-//		sendObjectByValue(itsBuffer, aClass, aTimestamp, -1);
-//		
-//		sendRegisteredObjects();
+		sendRegisteredObject(aClassId, aClass, aTimestamp);
 	}
 	
 	private long getClassLoaderId(ClassLoader aLoader, long aTimestamp) 
@@ -1035,9 +1032,6 @@ public class LowLevelEventWriter
 
 		public void push(Object aObject, long aId, Class<?> aClass, long aTimestamp)
 		{
-		    if (itsSize == itsObjects.length) {
-		        itsSize++;
-		    }
 			itsObjects[itsSize++].set(aObject, aId, aClass, aTimestamp);
 		}
 

@@ -52,7 +52,7 @@ public class ObjectDecoder
 	{
 		try
 		{
-			return decode(aStream, new HashMap<Integer, ObjectValue>());
+			return decode(aStream, new HashMap<Integer, Object>());
 		}
 		catch (IOException e)
 		{
@@ -60,7 +60,7 @@ public class ObjectDecoder
 		}
 	}
 
-	private static Object decode(DataInputStream aStream, Map<Integer, ObjectValue> aMapping) throws IOException
+	private static Object decode(DataInputStream aStream, Map<Integer, Object> aMapping) throws IOException
 	{
 		byte theType = aStream.readByte();
 		
@@ -83,12 +83,13 @@ public class ObjectDecoder
 			Object theValue = aMapping.get(theId);
 			if (theValue == null) throw new RuntimeException("No mapping for "+theId);
 			return theValue;
+		case ObjectValue.TYPE_ARRAY: return readArrayValue(aStream, aMapping); 
 			
 		default: throw new RuntimeException("Not handled: "+theType);
 		}
 	}
 	
-	private static ObjectValue readObjectValue(DataInputStream aStream, Map<Integer, ObjectValue> aMapping) throws IOException
+	private static ObjectValue readObjectValue(DataInputStream aStream, Map<Integer, Object> aMapping) throws IOException
 	{
 		String theClassName = _ByteBuffer.getString(aStream);
 		boolean theThrowable = aStream.readByte() != 0;
@@ -111,4 +112,17 @@ public class ObjectDecoder
 		
 		return theResult;
 	}
+	
+	private static Object[] readArrayValue(DataInputStream aStream, Map<Integer, Object> aMapping) throws IOException
+        {
+                int theLength = aStream.readInt();
+                
+                Object[] theResult = new Object[theLength];
+                aMapping.put(aMapping.size()+1, theResult);
+                for (int i = 0; i < theLength; i++) {
+                    theResult[i] = decode(aStream, aMapping);
+                }
+                
+                return theResult;
+        }
 }
