@@ -90,6 +90,15 @@ public class ObjectEncoder
 			aBuffer.put(ObjectValue.TYPE_OBJECTID);
 			aBuffer.putLong(v.id);
 		}
+		else if (aObject instanceof Object[]) 
+		{
+		        Object[] v = (Object[])aObject;
+    		        aBuffer.put(ObjectValue.TYPE_ARRAY);
+                        aBuffer.putInt(v.length);
+                        for (int i = 0; i < v.length; i++) {
+                            encode(v[i], aBuffer, aMapping);
+                        }
+		}
 		else if (aObject instanceof ObjectValue)
 		{
 			ObjectValue v = (ObjectValue) aObject;

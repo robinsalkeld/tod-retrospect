@@ -116,7 +116,6 @@ public class ObjectDecoder
 	private static Object[] readArrayValue(DataInputStream aStream, Map<Integer, Object> aMapping) throws IOException
         {
                 int theLength = aStream.readInt();
-                
                 Object[] theResult = new Object[theLength];
                 aMapping.put(aMapping.size()+1, theResult);
                 for (int i = 0; i < theLength; i++) {

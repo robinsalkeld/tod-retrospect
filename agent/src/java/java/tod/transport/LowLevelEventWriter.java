@@ -683,19 +683,23 @@ public class LowLevelEventWriter
 	 */
 	private void sendObjectByRef(_ByteBuffer aBuffer, Object aObject, long aTimestamp) 
 	{
-		long theObjectId = ObjectIdentity.get(aObject);
-		assert theObjectId != 0;
-		
-		if (theObjectId < 0)
-		{
-			// First time this object appears, register its type
-			theObjectId = -theObjectId;
-			Class<?> theClass = aObject.getClass();
-			itsRegisteredRefObjectsStack.push(aObject, theObjectId, theClass, aTimestamp);
-		}
-
 		sendValueType(aBuffer, _ValueType.OBJECT_UID);
-		aBuffer.putLong(theObjectId);
+		aBuffer.putLong(getObjectId(aObject, aTimestamp));
+	}
+	
+	private long getObjectId(Object aObject, long aTimestamp) {
+	    long theObjectId = ObjectIdentity.get(aObject);
+            assert theObjectId != 0;
+            
+            if (theObjectId < 0)
+            {
+                    // First time this object appears, register its type
+                    theObjectId = -theObjectId;
+                    Class<?> theClass = aObject.getClass();
+                    itsRegisteredRefObjectsStack.push(aObject, theObjectId, theClass, aTimestamp);
+            }
+            
+            return theObjectId;
 	}
 
 	/**
@@ -726,16 +730,13 @@ public class LowLevelEventWriter
 		itsObjectsBuffer.clear();
 		itsObjectsBuffer.position(22); // Header placeholder
 		
-		if (aObject instanceof Object[]) {
-		    sendArray(itsObjectsBuffer, (Object[])aObject, aTimestamp);
-		} else if (aObject instanceof Class<?>) {
-		    itsObjectsBuffer.put(ObjectValue.TYPE_ARRAY);
-		    itsObjectsBuffer.putInt(2);
-                    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
-		    sendObjectValue(itsObjectsBuffer, null, (Class<?>)aObject, aTimestamp);
-		} else {
-		    sendObjectValue(itsObjectsBuffer, aObject, aObject.getClass(), aTimestamp);
+		Object converted = convertObject(aObject, aObject.getClass(), aTimestamp);
+		if (aObject instanceof Class<?>) {
+		    Object staticFields = convertObject(null, (Class<?>)aObject, aTimestamp);
+		    converted = new Object[] { converted, staticFields };
 		}
+		
+		ObjectEncoder.encode(converted, itsObjectsBuffer);
 		
 		int theSize = itsObjectsBuffer.position()-5; // 5: event type + size 
 	
@@ -750,21 +751,8 @@ public class LowLevelEventWriter
 		itsStream.write(itsObjectsBuffer.array(), theSize+5, true);
 	}
 	
-	private void sendArray(_ByteBuffer aBuffer, Object[] anArray, long aTimestamp) {
-	    aBuffer.put(ObjectValue.TYPE_ARRAY);
-	    
-	    aBuffer.putInt(anArray.length);
-	    for (int i = 0; i < anArray.length; i++) {
-	        sendValue(aBuffer, anArray[i], aTimestamp);
-	    }
-	}
-	
-	private void sendObjectValue(_ByteBuffer aBuffer, Object aObject, Class<?> aClass, long aTimestamp) {
-	    aBuffer.put(ObjectValue.TYPE_VALUE);
-                
-            aBuffer.putString(aClass.getName());
-            aBuffer.put(aObject instanceof Throwable ? (byte) 1 : (byte) 0);
-            
+	private Object convertObject(Object aObject, Class<?> aClass, long aTimestamp) {
+	    ObjectValue theObjectValue = new ObjectValue(aClass.getName(), aObject instanceof Throwable);
             _ArrayList<FieldValue> theFieldValues = new _ArrayList<FieldValue>();
             boolean staticFields = aObject == null;
             
@@ -792,18 +780,18 @@ public class LowLevelEventWriter
                             
                             theField.setAccessible(theWasAccessible);
                             
+                            if (theValue != null && !theField.getType().isPrimitive()) {
+                                theValue = new _ObjectId(getObjectId(theValue, aTimestamp));
+                            }
+                            
                             theFieldValues.add(new FieldValue(theField.getName(), theValue));
                     }
                     
                     aClass = aClass.getSuperclass();
             }
             
-            aBuffer.putInt(theFieldValues.size());
-            for(FieldValue theField : theFieldValues.toArray(new FieldValue[theFieldValues.size()]))
-            {
-                    aBuffer.putString(theField.fieldName);
-                    sendValue(aBuffer, theField.value, aTimestamp);
-            }
+            theObjectValue.setFields(theFieldValues.toArray(new FieldValue[theFieldValues.size()]));
+            return theObjectValue;
 	}
 	
 	private void sendRegisteredRefObject(Object aObject, long aId, Class<?> aClass, long aTimestamp) 
