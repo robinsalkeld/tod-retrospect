@@ -34,6 +34,7 @@ import tod.core.ILogCollector;
 import tod.core.config.TODConfig;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.ITypeInfo;
+import tod.core.database.structure.ObjectId;
 import tod.core.transport.HighLevelEventReader;
 import tod.impl.dbgrid.DebuggerGridConfig;
 import tod.impl.dbgrid.GridMaster;
@@ -243,7 +244,12 @@ public class NodeConnector implements RINodeConnector
 		return itsDatabaseNode.getObjectType(aId);
 	}
 
-	public RIBufferIterator<StringSearchHit[]> searchStrings(String aText)
+	public ObjectId getClassId(ITypeInfo type) 
+    {
+        return itsDatabaseNode.getClassId(type);
+    }
+
+    public RIBufferIterator<StringSearchHit[]> searchStrings(String aText)
 	{
 		return itsDatabaseNode.searchStrings(aText);
 	}

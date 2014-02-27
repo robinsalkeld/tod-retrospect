@@ -29,6 +29,7 @@ import tod.core.database.browser.ILogBrowser;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IThreadInfo;
 import tod.core.database.structure.ITypeInfo;
+import tod.core.database.structure.ObjectId;
 import tod.impl.dbgrid.aggregator.QueryAggregator;
 import tod.impl.dbgrid.aggregator.RIQueryAggregator;
 import tod.impl.dbgrid.db.NodeRejectedException;
@@ -174,6 +175,8 @@ public interface RIGridMaster extends IRemote, RIMonitoringServerProvider
 	 * Returns the type of an object registered by the database.
 	 */
 	public ITypeInfo getObjectType(long aId);
+
+	public ObjectId getClassId(ITypeInfo aType);
 
 	/**
 	 * See {@link ILogBrowser#exec(ITask)}

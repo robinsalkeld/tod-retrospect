@@ -44,6 +44,7 @@ import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IMutableStructureDatabase;
 import tod.core.database.structure.IThreadInfo;
 import tod.core.database.structure.ITypeInfo;
+import tod.core.database.structure.ObjectId;
 import tod.core.server.TODServer;
 import tod.core.transport.LogReceiver;
 import tod.impl.database.structure.standard.HostInfo;
@@ -627,6 +628,27 @@ public class GridMaster implements RIGridMaster
 		
 		return theType;
 	}
+	
+	public ObjectId getClassId(final ITypeInfo aType)
+        {
+                List<ObjectId> theResults = Utils.fork(getNodes(), new ITask<RINodeConnector, ObjectId>()
+                {
+                        public ObjectId run(RINodeConnector aInput)
+                        {
+                                return aInput.getClassId(aType);
+                        }
+                });
+                
+                ObjectId theId = null;
+                for (ObjectId theResult : theResults)
+                {
+                        if (theResult == null) continue;
+                        if (theId != null) throw new RuntimeException("type present in various nodes!");
+                        theId = theResult;
+                }
+                
+                return theId;
+        }
 	
 	public RIBufferIterator<StringSearchHit[]> searchStrings(String aSearchText)
 	{

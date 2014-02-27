@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -52,7 +53,8 @@ public abstract class ObjectsDatabase
 	private final ObjectRefsReorderingBuffer itsRefsReorderingBuffer = new ObjectRefsReorderingBuffer();
 	
 	private final Map<Long, LoadedTypeInfo> itsClassesMap = new HashMap<Long, LoadedTypeInfo>();
-
+	private final Map<String, Long> itsClassIdsMap = new HashMap<String, Long>();
+	
 	private long itsDroppedObjects = 0;
 	private long itsUnorderedObjects = 0;
 	private long itsProcessedObjects = 0;
@@ -161,6 +163,7 @@ public abstract class ObjectsDatabase
 				
 		LoadedTypeInfo theLoadedClass = new LoadedTypeInfo(aClassId, aLoaderId, theType);
 		LoadedTypeInfo thePrevious = itsClassesMap.put(aClassId, theLoadedClass);
+		itsClassIdsMap.put(theType.getName(), aClassId);
 		assert thePrevious == null;
 	}
 	
@@ -169,6 +172,11 @@ public abstract class ObjectsDatabase
 		return itsClassesMap.get(aClassId);
 	}
 
+	public Long getClassId(ITypeInfo type) 
+	{
+	        return itsClassIdsMap.get(type.getName());
+	}
+	
 	public void registerClassLoader(long aLoaderId, long aClassId)
 	{
 		// TODO: implement

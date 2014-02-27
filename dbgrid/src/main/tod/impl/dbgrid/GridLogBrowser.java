@@ -195,16 +195,16 @@ implements ILogBrowser, IScheduled
 	
 	public Object getRegistered(ObjectId aId)
 	{
-		Object result = getRegisteredInternal(aId.getId());
+		Object result = getRegisteredInternal(aId);
 		if (result != null && itsMaster.getObjectType(aId.getId()).getName().equals(Class.class.getName())) {
 		    result = ((Object[])result)[0];
 		}
 		return result;
 	}
 
-	private Object getRegisteredInternal(long aId)
+	private Object getRegisteredInternal(ObjectId aObjectId)
 	{
-	        Decodable theDecodable = itsMaster.getRegisteredObject(aId);
+	        Decodable theDecodable = itsMaster.getRegisteredObject(aObjectId.getId());
                 return theDecodable != null ? theDecodable.decode() : null;
 	}
 	
@@ -213,12 +213,13 @@ implements ILogBrowser, IScheduled
 	        ObjectValue initialState = null;
 	        if (aField.isStatic()) {
 	            ITypeInfo type = aField.getDeclaringType();
-	            Object[] registered = (Object[])getRegisteredInternal(type.getId());
+	            ObjectId typeId = itsMaster.getClassId(type);
+	            Object[] registered = (Object[])getRegisteredInternal(typeId);
 	            if (registered != null) {
                         initialState = (ObjectValue)registered[1];
 	            }
 	        } else {
-	            initialState = (ObjectValue)getRegisteredInternal(aObjectId.getId());
+	            initialState = (ObjectValue)getRegisteredInternal(aObjectId);
 	        }
 	        
 	        if (initialState != null) {
@@ -229,7 +230,7 @@ implements ILogBrowser, IScheduled
 	}
 
 	public Object getInitialArrayValue(ObjectId aObjectId, int index) {
-                Object[] initialState = (Object[])getRegisteredInternal(aObjectId.getId());
+                Object[] initialState = (Object[])getRegisteredInternal(aObjectId);
                 if (initialState != null) {
                     return initialState[index];
                 } else {

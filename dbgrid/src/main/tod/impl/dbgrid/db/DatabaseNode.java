@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import tod.agent.AgentConfig;
 import tod.core.DebugFlags;
 import tod.core.ILogCollector;
 import tod.core.config.TODConfig;
@@ -455,6 +456,19 @@ public abstract class DatabaseNode
 		return theObjectsDatabase != null ? theObjectsDatabase.load(theObjectId) : null;
 	}
 
+	public ObjectId getClassId(ITypeInfo type) 
+	{
+	    for (int hostId = 0; hostId < itsObjectsDatabases.size(); hostId++) {
+	        ObjectsDatabase aObjectsDatabase = itsObjectsDatabases.get(hostId);
+	        Long id = aObjectsDatabase.getClassId(type);
+	        if (id != null) {
+	            return new ObjectId((hostId << AgentConfig.HOST_BITS) | id);
+	        }
+	    }
+	    return null;
+	}
+
+	
 	/**
 	 * Returns the type of the given object.
 	 */
