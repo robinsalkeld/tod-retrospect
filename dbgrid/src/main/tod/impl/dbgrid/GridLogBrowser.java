@@ -214,9 +214,11 @@ implements ILogBrowser, IScheduled
 	        if (aField.isStatic()) {
 	            ITypeInfo type = aField.getDeclaringType();
 	            ObjectId typeId = itsMaster.getClassId(type);
-	            Object[] registered = (Object[])getRegisteredInternal(typeId);
-	            if (registered != null) {
-                        initialState = (ObjectValue)registered[1];
+	            if (typeId != null) {
+        	            Object[] registered = (Object[])getRegisteredInternal(typeId);
+        	            if (registered != null) {
+                                initialState = (ObjectValue)registered[1];
+        	            }
 	            }
 	        } else {
 	            initialState = (ObjectValue)getRegisteredInternal(aObjectId);

@@ -76,7 +76,7 @@ public class ObjectDecoder
 		case ObjectValue.TYPE_FLOAT: return Float.intBitsToFloat(_ByteBuffer.getIntL(aStream));
 		case ObjectValue.TYPE_DOUBLE: return Double.longBitsToDouble(_ByteBuffer.getLongL(aStream));
 		case ObjectValue.TYPE_BOOLEAN: return aStream.readByte() != 0;
-		case ObjectValue.TYPE_OBJECTID: return new ObjectId(aStream.readLong());
+		case ObjectValue.TYPE_OBJECTID: return new ObjectId(_ByteBuffer.getLongL(aStream));
 		case ObjectValue.TYPE_VALUE: return readObjectValue(aStream, aMapping); 
 		case ObjectValue.TYPE_REF:
 			int theId = _ByteBuffer.getIntL(aStream);
@@ -115,7 +115,7 @@ public class ObjectDecoder
 	
 	private static Object[] readArrayValue(DataInputStream aStream, Map<Integer, Object> aMapping) throws IOException
         {
-                int theLength = aStream.readInt();
+                int theLength = _ByteBuffer.getIntL(aStream);
                 Object[] theResult = new Object[theLength];
                 aMapping.put(aMapping.size()+1, theResult);
                 for (int i = 0; i < theLength; i++) {

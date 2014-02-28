@@ -58,7 +58,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return 0l;
 		}
 	};
 	
@@ -66,7 +66,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return (byte)0;
 		}
 	};
 	
@@ -74,7 +74,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return (short)0;
 		}
 	};
 	
@@ -82,7 +82,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return (char)0;
 		}
 	};
 	
@@ -90,7 +90,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return 0.0d;
 		}
 	};
 	
@@ -98,7 +98,7 @@ public abstract class PrimitiveTypeInfo extends TypeInfo implements IPrimitiveTy
 	{
 		public Object getDefaultInitialValue()
 		{
-			return 0;
+			return 0.0f;
 		}
 	};
 	
