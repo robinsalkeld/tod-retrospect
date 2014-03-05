@@ -354,6 +354,19 @@ public class BehaviorInfo extends MemberInfo implements IMutableBehaviorInfo
     		|| getBehaviourKind() == BehaviorKind.STATIC_METHOD;
     }
 	
+    @Override
+    public void setDatabase(IShareableStructureDatabase aDatabase, boolean aIsOriginal) {
+        super.setDatabase(aDatabase, aIsOriginal);
+        for (ITypeInfo theArgumentType : itsArgumentTypes) {
+            if (theArgumentType instanceof ISerializableLocationInfo) {
+                ((ISerializableLocationInfo)theArgumentType).setDatabase(aDatabase, aIsOriginal);
+            }
+        }
+        if (itsReturnType instanceof ISerializableLocationInfo) {
+            ((ISerializableLocationInfo)itsReturnType).setDatabase(aDatabase, aIsOriginal);
+        }
+    }
+    
 	@Override
 	public String toString()
 	{
