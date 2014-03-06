@@ -1,2 +1,2 @@
 libtod-agent15.dylib
-agent/src/native
+agent/src/native/macos

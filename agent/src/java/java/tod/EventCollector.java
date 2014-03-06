@@ -28,8 +28,6 @@ import java.tod.io._SocketChannel;
 import java.tod.transport.IOThread;
 import java.tod.transport.LowLevelEventWriter;
 import java.tod.transport.NakedLinkedList;
-import java.util.ArrayList;
-import java.util.List;
 
 import tod.agent.AgentConfig;
 import tod.agent.AgentDebugFlags;
@@ -763,6 +761,28 @@ public final class EventCollector
         theThread.packetEnd();
 	}
 
+	public void logClassLoaded(Class<?> aClass) 
+	{
+	        if (AgentDebugFlags.COLLECTOR_IGNORE_ALL) return;
+                
+	        // The equivalent of the checks in agentClassFileLoadHook() in agent.cpp
+	        if (aClass.getName().startsWith("java.tod") || aClass.getName().startsWith("tod.agent")) {
+	            return;
+	        }
+	        
+	        ThreadData theThread = getThreadData();
+            long theTimestamp = theThread.timestamp();
+
+            LowLevelEventWriter theWriter = theThread.packetStart(theTimestamp);
+            theWriter.sendClassLoaded(aClass, theTimestamp);
+            theThread.packetEnd();
+	}
+	
+	public static void logClassLoadedStatic(Object aClass) 
+	{
+	        INSTANCE.logClassLoaded((Class<?>)aClass);
+	}
+	
 	/**
 	 * Returns the id of the currently called behavior (as registered).
 	 */

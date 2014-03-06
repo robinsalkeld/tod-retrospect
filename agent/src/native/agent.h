@@ -43,7 +43,9 @@ void agentClassFileLoadHook(
 	jint class_data_len, const unsigned char* class_data,
 	jint* new_class_data_len, unsigned char** new_class_data,
 	void* (*malloc_f)(unsigned int));
-	
+
+void agentClassPrepareHook(JNIEnv* jni, jclass klass);
+
 bool agentShouldProcessException(JNIEnv* jni, jmethodID method);
 
 void agentException(
@@ -64,6 +66,8 @@ void agentInit(
 	char* aPropCachePath,
 	char* aPropClientName);
 	
+void agentStartCapture(JNIEnv* jni);
+
 void agentStop();
 
 JNIEXPORT jint JNICALL Java_java_tod__1AgConfig_getHostId

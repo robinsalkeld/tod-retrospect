@@ -98,6 +98,17 @@ void JNICALL cbClassFileLoadHook(
 }
 
 
+void JNICALL cbClassPrepareHook(jvmtiEnv *jvmti,
+            JNIEnv* jni,
+            jthread thread,
+            jclass klass)
+{
+	agentClassPrepareHook(
+		jni,
+		klass);
+}
+
+
 void JNICALL cbException(
 	jvmtiEnv *jvmti,
 	JNIEnv* jni,
@@ -148,6 +159,25 @@ void JNICALL cbVMStart(
 	JNIEnv* jni)
 {
 	agentStart(jni);
+}
+
+void prepareAlreadyLoadedClasses(JNIEnv* jni)
+{
+	jint class_count_ptr;
+	jclass* classes;
+	gJvmti->GetLoadedClasses(&class_count_ptr, &classes);
+	jclass* classes_ptr = classes;
+	while (class_count_ptr-- > 0) {
+		agentClassPrepareHook(jni, *classes_ptr);
+		classes_ptr++;
+	}
+	gJvmti->Deallocate((unsigned char*) classes);
+}
+
+void JNICALL cbVMInit(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread)
+{
+	agentStartCapture(jni);
+	prepareAlreadyLoadedClasses(jni);
 }
 
 /**
@@ -206,16 +236,21 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 	// Set callbacks and enable event notifications 
 	memset(&callbacks, 0, sizeof(callbacks));
 	callbacks.ClassFileLoadHook = &cbClassFileLoadHook;
+	callbacks.ClassPrepare = &cbClassPrepareHook;
 	callbacks.Exception = &cbException;
 	callbacks.VMStart = &cbVMStart;
+	callbacks.VMInit = &cbVMInit;
 	
 	err = jvmti->SetEventCallbacks(&callbacks, sizeof(callbacks));
 	check_jvmti_error(jvmti, err, "SetEventCallbacks");
 	
 	// Enable events
  	enable_event(jvmti, JVMTI_EVENT_CLASS_FILE_LOAD_HOOK);
+ 	// TODO-RS: Causes SIGSEGV for some reason...
+// 	enable_event(jvmti, JVMTI_EVENT_CLASS_PREPARE);
 	enable_event(jvmti, JVMTI_EVENT_EXCEPTION);
 	enable_event(jvmti, JVMTI_EVENT_VM_START);
+	enable_event(jvmti, JVMTI_EVENT_VM_INIT);
 	
 	cfgIsJVM14 = false;
 

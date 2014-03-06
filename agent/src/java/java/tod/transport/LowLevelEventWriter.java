@@ -877,6 +877,12 @@ public class LowLevelEventWriter
 		copyBuffer();
 	}
 	
+	public void sendClassLoaded(Class<?> aClass, long aTimestamp) {
+	        // Called just for the side effect of registering the class state
+	        // if this is the first time we've seen it.
+	        getClassId(aClass, aTimestamp);
+	}
+	
 	/**
 	 * A stack of objects pending to be sent.
 	 * 
@@ -889,11 +895,6 @@ public class LowLevelEventWriter
 		 */
 		private final _ArrayList<ObjectEntry> itsObjects = new _ArrayList<ObjectEntry>(1024);
 
-		/**
-		 * Number of entries in {@link #itsObjects}.
-		 */
-		private int itsSize = 0;
-
 		public void push(long aId, Object aObject, long aTimestamp)
 		{
 			itsObjects.add(new ObjectEntry(aId, aObject, aTimestamp));
@@ -901,7 +902,7 @@ public class LowLevelEventWriter
 
 		public boolean isEmpty()
 		{
-			return itsSize == 0;
+			return itsObjects.isEmpty();
 		}
 
 		public ObjectEntry pop()

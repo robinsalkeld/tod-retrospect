@@ -102,6 +102,7 @@ int isInitializingExceptionMethods = 0;
 StaticVoidMethod* TracedMethods_setTraced;
 StaticVoidMethod* TOD_enable;
 StaticVoidMethod* TOD_start;
+StaticVoidMethod* EventCollector_logClassLoadedStatic;
 
 // Method IDs for methods whose exceptions are ignored
 jmethodID ignoredExceptionMethods[3];
@@ -274,6 +275,16 @@ void registerTracedMethods(JNIEnv* jni, int nTracedMethods, int* tracedMethods)
 	if (tracedMethods) delete tracedMethods;
 }
 
+
+void agentStartCapture(JNIEnv* jni)
+{
+	printf("[TOD] Starting capture.\n");
+	fflush(stdout);
+
+	CAPTURE_STARTED = 1;
+	TOD_start->invoke(jni);
+}
+
 void agentClassFileLoadHook(
 	JNIEnv* jni, const char* name, 
 	jint class_data_len, const unsigned char* class_data,
@@ -286,11 +297,7 @@ void agentClassFileLoadHook(
 	{
 		if (! startsWith(name, "java/") && ! startsWith(name, "sun/") && ! startsWith(name, "tod/"))
 		{
-			printf("[TOD] Starting capture (%s).\n", name);
-			fflush(stdout);
-
-			CAPTURE_STARTED = 1;
-			TOD_start->invoke(jni);
+			agentStartCapture(jni);
 		}
 	}
 
@@ -553,6 +560,25 @@ void agentClassFileLoadHook(
 	// Register traced methods
 	registerTracedMethods(jni, nTracedMethods, tracedMethods);
 	fflush(stdout);
+}
+
+void agentClassPrepareHook(
+	JNIEnv* jni, jclass klass)
+{
+	if (EventCollector_logClassLoadedStatic == NULL)
+	{
+		if (cfgObfuscation == 1)
+		{
+			EventCollector_logClassLoadedStatic = new StaticVoidMethod(jni, "java/todX/EventCollector", "logClassLoadedStatic", "(Ljava/lang/Object;)V");
+		}
+		else
+		{
+			EventCollector_logClassLoadedStatic = new StaticVoidMethod(jni, "java/tod/EventCollector", "logClassLoadedStatic", "(Ljava/lang/Object;)V");
+		}
+	}
+
+	if (propVerbose>=2) printf("Class prepare %p %p\n", EventCollector_logClassLoadedStatic, klass);
+	EventCollector_logClassLoadedStatic->invoke(jni, klass);
 }
 
 void ignoreMethod(JNIEnv* jni, int index, char* className, char* methodName, char* signature)
