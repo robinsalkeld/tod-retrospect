@@ -633,7 +633,11 @@ public class ObjectInspector implements IObjectInspector
 		public int getEntryCount()
 		{
 			INewArrayEvent theEvent = (INewArrayEvent) getCreationEvent();
-			return theEvent.getArraySize();
+			if (theEvent != null) {
+                            return theEvent.getArraySize();
+                        } else {
+                            return itsLogBrowser.getArraySize(itsObjectId);
+                        }
 		}
 
 		@Override
@@ -641,8 +645,7 @@ public class ObjectInspector implements IObjectInspector
 		public List<IEntryInfo> getEntries(int aRangeStart, int aRangeSize)
 		{
 			List<IEntryInfo> theResult = new ArrayList<IEntryInfo>();
-			INewArrayEvent theEvent = (INewArrayEvent) getCreationEvent();
-			int theSize = theEvent.getArraySize();
+			int theSize = getEntryCount();
 				
 			for(int i=aRangeStart;i<Math.min(aRangeStart+aRangeSize, theSize);i++)
 			{

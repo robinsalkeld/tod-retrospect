@@ -179,6 +179,11 @@ public class LocalBrowser implements ILogBrowser
 		throw new UnsupportedOperationException();
 	}
 	
+	public int getArraySize(ObjectId aObjectId) 
+	{
+	        throw new UnsupportedOperationException();
+	}
+	
 	public IEventBrowser createBrowser (IEventFilter aFilter)
 	{
 		AbstractFilter theFilter = (AbstractFilter) aFilter;

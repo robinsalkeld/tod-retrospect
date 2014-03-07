@@ -391,4 +391,6 @@ public interface ILogBrowser
 	public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField);
 	
 	public Object getInitialArrayValue(ObjectId aObjectId, int index);
+	
+	public int getArraySize(ObjectId aObjectId);
 }

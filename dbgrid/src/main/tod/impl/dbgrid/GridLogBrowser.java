@@ -241,6 +241,11 @@ implements ILogBrowser, IScheduled
                 }
 	}
 	
+	public int getArraySize(ObjectId aObjectId) {
+        	Object[] initialState = (Object[])getRegisteredInternal(aObjectId);
+                return initialState.length;
+	}
+	
         public long getEventsCount()
 	{
 		if (itsEventsCount == 0) updateStats(); 

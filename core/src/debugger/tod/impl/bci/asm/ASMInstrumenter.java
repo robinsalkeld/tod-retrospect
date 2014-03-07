@@ -75,7 +75,10 @@ public class ASMInstrumenter implements IInstrumenter
 	public InstrumentedClass instrumentClass(String aName, byte[] aBytecode, boolean aUseJava14)
 	{
 		// Strange things happen inside those classes...
-		if (aName.startsWith("sun/reflect/")) return null;
+//		if (aName.startsWith("sun/reflect/")) 
+//		{
+//			return null;
+//		}
 		
 		if (TODConfig.DB_SCOPE_CHECK)
 		{

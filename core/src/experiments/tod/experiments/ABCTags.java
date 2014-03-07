@@ -420,6 +420,11 @@ public class ABCTags
 			throw new UnsupportedOperationException();
 		}
 		
+		public int getArraySize(ObjectId aObjectId)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
 		public Iterable<IThreadInfo> getThreads()
 		{
 			return Collections.EMPTY_LIST;

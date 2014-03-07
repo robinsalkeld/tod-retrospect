@@ -47,6 +47,29 @@ public class ArrayTypeInfo extends TypeInfo implements IArrayTypeInfo
 		itsDimensions = aDimensions;
 	}
 	
+	@Override
+	public boolean equals(Object aObj)
+	{
+		if (!super.equals(aObj)) {
+			return false;
+		}
+		
+		ArrayTypeInfo other = (ArrayTypeInfo)aObj;
+		return itsElementType.equals(other.itsElementType)
+			&& itsDimensions == other.itsDimensions;
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((getDatabase() == null) ? 0 : getDatabase().hashCode());
+		result = prime * result + itsElementType.hashCode();
+		result = prime * result + itsDimensions;
+		return result;
+	}
+	
 	public String getJvmName()
 	{
 		throw new UnsupportedOperationException();

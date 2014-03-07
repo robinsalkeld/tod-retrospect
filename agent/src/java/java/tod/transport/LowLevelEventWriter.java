@@ -41,6 +41,7 @@ import static java.tod._LowLevelEventType.NEW_ARRAY;
 import static java.tod._LowLevelEventType.REGISTER_OBJECT;
 import static java.tod._LowLevelEventType.REGISTER_THREAD;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.tod.EventCollector;
@@ -683,25 +684,21 @@ public class LowLevelEventWriter
 	 */
 	private void sendObjectByRef(_ByteBuffer aBuffer, Object aObject, long aTimestamp) 
 	{
-		sendValueType(aBuffer, _ValueType.OBJECT_UID);
-		aBuffer.putLong(getObjectId(aObject, aTimestamp));
+		long theObjectId = ObjectIdentity.get(aObject);
+                assert theObjectId != 0;
+                
+                if (theObjectId < 0)
+                {
+                        // First time this object appears, register its type
+                        theObjectId = -theObjectId;
+                        Class<?> theClass = aObject.getClass();
+                        itsRegisteredRefObjectsStack.push(aObject, theObjectId, theClass, aTimestamp);
+                }
+
+                sendValueType(aBuffer, _ValueType.OBJECT_UID);
+                aBuffer.putLong(theObjectId);
 	}
 	
-	private long getObjectId(Object aObject, long aTimestamp) {
-	    long theObjectId = ObjectIdentity.get(aObject);
-            assert theObjectId != 0;
-            
-            if (theObjectId < 0)
-            {
-                    // First time this object appears, register its type
-                    theObjectId = -theObjectId;
-                    Class<?> theClass = aObject.getClass();
-                    itsRegisteredRefObjectsStack.push(aObject, theObjectId, theClass, aTimestamp);
-            }
-            
-            return theObjectId;
-	}
-
 	/**
 	 * Sends all pending registered objects.
 	 */
@@ -710,18 +707,20 @@ public class LowLevelEventWriter
 		// Note: remember that this is thread-safe because SocketCollector has one
 		// CollectorPacketWriter per thread.
 
-		while (!itsRegisteredObjectsStack.isEmpty())
-		{
-			ObjectEntry theEntry = itsRegisteredObjectsStack.pop();
-			sendRegisteredObject(theEntry.id, theEntry.object, theEntry.timestamp);
-		}
-		
-		while (!itsRegisteredRefObjectsStack.isEmpty())
-		{
-			RefObjectEntry theEntry = itsRegisteredRefObjectsStack.pop();
-			sendRegisteredRefObject(theEntry.object, theEntry.id, theEntry.cls, theEntry.timestamp);
-		}
-
+	        while (!itsRegisteredObjectsStack.isEmpty() || !itsRegisteredRefObjectsStack.isEmpty())
+	        {
+        		while (!itsRegisteredObjectsStack.isEmpty())
+        		{
+        			ObjectEntry theEntry = itsRegisteredObjectsStack.pop();
+        			sendRegisteredObject(theEntry.id, theEntry.object, theEntry.timestamp);
+        		}
+        		
+        		while (!itsRegisteredRefObjectsStack.isEmpty())
+        		{
+        			RefObjectEntry theEntry = itsRegisteredRefObjectsStack.pop();
+        			sendRegisteredRefObject(theEntry.object, theEntry.id, theEntry.cls, theEntry.timestamp);
+        		}
+	        }
 	}
 
 	private void sendRegisteredObject(long aId, Object aObject, long aTimestamp) 
@@ -751,47 +750,77 @@ public class LowLevelEventWriter
 		itsStream.write(itsObjectsBuffer.array(), theSize+5, true);
 	}
 	
-	private Object convertObject(Object aObject, Class<?> aClass, long aTimestamp) {
-	    ObjectValue theObjectValue = new ObjectValue(aClass.getName(), aObject instanceof Throwable);
-            _ArrayList<FieldValue> theFieldValues = new _ArrayList<FieldValue>();
-            boolean staticFields = aObject == null;
-            
-            while (aClass != null)
-            {
-                    Field[] theFields = aClass.getDeclaredFields();
-                    for (Field theField : theFields)
-                    {
-                            if (Modifier.isStatic(theField.getModifiers()) != staticFields) {
-                                continue;
-                            }
+	private Object convertObjectByRef(Class<?> aDeclaredType, Object aValue, long aTimestamp) {
+	    if (aValue != null && !aDeclaredType.isPrimitive()) {
+	        long theObjectId = ObjectIdentity.get(aValue);
+                assert theObjectId != 0;
+                
+                if (theObjectId < 0)
+                {
+                        // First time this object appears, register it
+                        theObjectId = -theObjectId;
+                        itsRegisteredObjectsStack.push(theObjectId, aValue, aTimestamp);
                         
-                            boolean theWasAccessible = theField.isAccessible();
-                            theField.setAccessible(true);
-
-                            Object theValue;
-                            try
-                            {
-                                    theValue = theField.get(aObject);
-                            }
-                            catch (Exception e)
-                            {
-                                    theValue = "Cannot obtain field value: "+e.getMessage();
-                            }
-                            
-                            theField.setAccessible(theWasAccessible);
-                            
-                            if (theValue != null && !theField.getType().isPrimitive()) {
-                                theValue = new _ObjectId(getObjectId(theValue, aTimestamp));
-                            }
-                            
-                            theFieldValues.add(new FieldValue(theField.getName(), theValue));
-                    }
-                    
-                    aClass = aClass.getSuperclass();
+                        // Also register its type
+                        itsRegisteredRefObjectsStack.push(aValue, theObjectId, aValue.getClass(), aTimestamp);
+                }
+                
+                return new _ObjectId(theObjectId);
+            } else {
+                return aValue;
             }
-            
-            theObjectValue.setFields(theFieldValues.toArray(new FieldValue[theFieldValues.size()]));
-            return theObjectValue;
+	}
+	
+	private Object convertObject(Object aObject, Class<?> aClass, long aTimestamp) {
+	    if (aObject != null && aObject.getClass().isArray()) {
+	        Class<?> theElementType = aObject.getClass().getComponentType();
+                Object[] values = new Object[Array.getLength(aObject)];
+	        for (int i = 0; i < values.length; i++) {
+                    values[i] = convertObjectByRef(theElementType, Array.get(aObject, i), aTimestamp);
+                }
+	        return values;
+	        
+	    } else {
+	        if (aObject != null && aObject.getClass().getName().equals("java.util.HashTable")) {
+	            aObject.getClass();
+	        }
+    	        ObjectValue theObjectValue = new ObjectValue(aClass.getName(), aObject instanceof Throwable);
+                _ArrayList<FieldValue> theFieldValues = new _ArrayList<FieldValue>();
+                boolean staticFields = aObject == null;
+                
+                while (aClass != null)
+                {
+                        Field[] theFields = aClass.getDeclaredFields();
+                        for (Field theField : theFields)
+                        {
+                                if (Modifier.isStatic(theField.getModifiers()) != staticFields) {
+                                    continue;
+                                }
+                            
+                                boolean theWasAccessible = theField.isAccessible();
+                                theField.setAccessible(true);
+    
+                                Object theValue;
+                                try
+                                {
+                                        theValue = theField.get(aObject);
+                                }
+                                catch (Exception e)
+                                {
+                                        theValue = "Cannot obtain field value: "+e.getMessage();
+                                }
+                                
+                                theField.setAccessible(theWasAccessible);
+                                
+                                theFieldValues.add(new FieldValue(theField.getName(), convertObjectByRef(theField.getType(), theValue, aTimestamp)));
+                        }
+                        
+                        aClass = aClass.getSuperclass();
+                }
+                
+                theObjectValue.setFields(theFieldValues.toArray(new FieldValue[theFieldValues.size()]));
+                return theObjectValue;
+	    }
 	}
 	
 	private void sendRegisteredRefObject(Object aObject, long aId, Class<?> aClass, long aTimestamp) 
@@ -846,6 +875,7 @@ public class LowLevelEventWriter
 		
 		// Also send the initial state of the class' static fields
 		sendRegisteredObject(aClassId, aClass, aTimestamp);
+		sendRegisteredObjects();
 	}
 	
 	private long getClassLoaderId(ClassLoader aLoader, long aTimestamp) 
@@ -1004,34 +1034,21 @@ public class LowLevelEventWriter
 		/**
 		 * List of registered objects that must be sent.
 		 */
-		private final RefObjectEntry[] itsObjects = new RefObjectEntry[1024];
-
-		/**
-		 * Number of entries in {@link #itsObjects}.
-		 */
-		private int itsSize = 0;
-
-		public RegisteredRefObjectsStack()
-		{
-			for (int i = 0; i < itsObjects.length; i++)
-			{
-				itsObjects[i] = new RefObjectEntry();
-			}
-		}
+		private final _ArrayList<RefObjectEntry> itsObjects = new _ArrayList<RefObjectEntry>(1024);
 
 		public void push(Object aObject, long aId, Class<?> aClass, long aTimestamp)
 		{
-			itsObjects[itsSize++].set(aObject, aId, aClass, aTimestamp);
+			itsObjects.add(new RefObjectEntry(aObject, aId, aClass, aTimestamp));
 		}
 
 		public boolean isEmpty()
 		{
-			return itsSize == 0;
+			return itsObjects.isEmpty();
 		}
 
 		public RefObjectEntry pop()
 		{
-			return itsObjects[--itsSize];
+			return itsObjects.remove(itsObjects.size() - 1);
 		}
 	}
 
@@ -1042,7 +1059,7 @@ public class LowLevelEventWriter
 		public Class<?> cls;
 		public long timestamp;
 
-		public void set(Object aObject, long aId, Class<?> aClass, long aTimestamp)
+		public RefObjectEntry(Object aObject, long aId, Class<?> aClass, long aTimestamp)
 		{
 			object = aObject;
 			id = aId;
