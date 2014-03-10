@@ -106,7 +106,7 @@ public class DummyCollector implements ILogCollector
 	{
 	}
 
-	public void registerClass(long aId, long aLoaderId, String aName)
+	public void registerClass(long aId, long aLoaderId, String aName, boolean initialized)
 	{
 	}
 

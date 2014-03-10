@@ -348,8 +348,9 @@ public class HighLevelEventReader
 		if (READ_SIZE) aStream.readInt(); // Packet size
 		long theClassId = aStream.readLong();
 		long theLoaderId = aStream.readLong();
+		boolean initialized = aStream.readByte() == 0 ? false : true;
 		String theName = aStream.readUTF();
-		aCollector.registerClass(theClassId, theLoaderId, theName);
+		aCollector.registerClass(theClassId, theLoaderId, theName, initialized);
 	}
 	
 	public static void readRegisterClassLoader(DataInputStream aStream, ILogCollector aCollector) throws IOException

@@ -27,12 +27,15 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import tod.core.DebugFlags;
+import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IMutableStructureDatabase;
 import tod.core.database.structure.ITypeInfo;
 import tod.core.transport.ObjectDecoder;
@@ -144,7 +147,10 @@ public abstract class ObjectsDatabase
 		
 		itsLastRefProcessedId = theId;
 		itsProcessedObjects++;
-		registerRef0(theId, aEntry.classId);
+		
+		long theClassId = aEntry.classId;
+                getLoadedClass(theClassId).instances.add(theId);
+		registerRef0(theId, theClassId);
 	}
 	
 	protected abstract void registerRef0(long aId, long aClassId);
@@ -155,13 +161,13 @@ public abstract class ObjectsDatabase
 		return getLoadedClass(theClassId);
 	}
 	
-	public void registerClass(long aClassId, long aLoaderId, String aName)
+	public void registerClass(long aClassId, long aLoaderId, String aName, boolean anInitialized)
 	{
 		ITypeInfo theType = aName.charAt(0) == '[' ?
 				itsStructureDatabase.getNewType(aName)
 				: itsStructureDatabase.getNewClass(aName);
 				
-		LoadedTypeInfo theLoadedClass = new LoadedTypeInfo(aClassId, aLoaderId, theType);
+		LoadedTypeInfo theLoadedClass = new LoadedTypeInfo(aClassId, aLoaderId, theType, anInitialized);
 		LoadedTypeInfo thePrevious = itsClassesMap.put(aClassId, theLoadedClass);
 		itsClassIdsMap.put(theType.getName(), aClassId);
 		assert thePrevious == null;
@@ -177,7 +183,29 @@ public abstract class ObjectsDatabase
 	        return itsClassIdsMap.get(type.getName());
 	}
 	
-	public void registerClassLoader(long aLoaderId, long aClassId)
+	public List<Long> getInstances(ITypeInfo type) 
+        {
+	        Long classId = getClassId(type);
+                if (classId == null) {
+                    return Collections.<Long>emptyList();
+                }
+                
+                LoadedTypeInfo loadedClass = getLoadedClass(type.getId());
+                return loadedClass != null ? loadedClass.instances : Collections.<Long>emptyList();
+        }
+        
+	public Boolean isInitialized(IClassInfo aClass) 
+	{
+	        Long classId = getClassId(aClass);
+	        if (classId == null) {
+	            return null;
+	        }
+	        
+                LoadedTypeInfo loadedClass = getLoadedClass(classId);
+                return loadedClass != null ? loadedClass.initialized : null;
+	}
+	
+        public void registerClassLoader(long aLoaderId, long aClassId)
 	{
 		// TODO: implement
 	}
@@ -330,12 +358,15 @@ public abstract class ObjectsDatabase
 		public final long id;
 		public final long loaderId;
 		public final ITypeInfo typeInfo;
+		public final List<Long> instances = new ArrayList<Long>();
+		public final boolean initialized;
 		
-		public LoadedTypeInfo(long aId, long aLoaderId, ITypeInfo aType)
+		public LoadedTypeInfo(long aId, long aLoaderId, ITypeInfo aType, boolean aInitialized)
 		{
 			id = aId;
 			loaderId = aLoaderId;
 			typeInfo = aType;
+			initialized = aInitialized;
 		}
 		
 		@Override

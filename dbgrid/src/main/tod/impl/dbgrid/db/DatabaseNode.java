@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import tod.agent.AgentConfig;
@@ -391,7 +392,7 @@ public abstract class DatabaseNode
 		getObjectsDatabase(theHostId).registerRef(theObjectId, aTimestamp, ObjectId.getObjectId(aClassId));
 	}
 
-	public void registerClass(long aId, long aLoaderId, String aName)
+	public void registerClass(long aId, long aLoaderId, String aName, boolean anInitialized)
 	{
 //		Utils.println("Register class - id: %d, loader: %d, name: %s", aId, aLoaderId, aName);
 		if (DebugFlags.SKIP_OBJECTS) return;
@@ -400,7 +401,7 @@ public abstract class DatabaseNode
 		int theHostId = ObjectId.getHostId(aId);
 		assert ObjectId.getHostId(aLoaderId) == theHostId;
 		
-		getObjectsDatabase(theHostId).registerClass(theClassId, ObjectId.getObjectId(aLoaderId), aName);
+		getObjectsDatabase(theHostId).registerClass(theClassId, ObjectId.getObjectId(aLoaderId), aName, anInitialized);
 	}
 
 	public void registerClassLoader(long aId, long aClassId)
@@ -467,26 +468,55 @@ public abstract class DatabaseNode
 	    }
 	    return null;
 	}
-
 	
-	/**
-	 * Returns the type of the given object.
-	 */
-	public ITypeInfo getObjectType(long aId) 
+	public List<ObjectId> getInstances(ITypeInfo type) 
 	{
-		if (DebugFlags.SKIP_OBJECTS) return null;
+		if (DebugFlags.SKIP_OBJECTS) return Collections.emptyList();
 		
-		long theObjectId = ObjectId.getObjectId(aId);
-		int theHostId = ObjectId.getHostId(aId);
-		ObjectsDatabase theObjectsDatabase = getObjectsDatabase(theHostId);
-		if (theObjectsDatabase == null) return null;
-
-		LoadedTypeInfo theLoadedClass = theObjectsDatabase.getLoadedClassForObject(theObjectId);
-		Utils.println("getObjectType(%d) -> %s", aId, theLoadedClass);
-		return theLoadedClass != null ? theLoadedClass.typeInfo : null;
+		for (int hostId = 0; hostId < itsObjectsDatabases.size(); hostId++) {
+            ObjectsDatabase aObjectsDatabase = itsObjectsDatabases.get(hostId);
+            List<Long> ids = aObjectsDatabase.getInstances(type);
+            if (ids != null) {
+            	List<ObjectId> result = new ArrayList<ObjectId>();
+            	for (Long id : ids) {
+            		new ObjectId((hostId << AgentConfig.HOST_BITS) | id);
+            	}
+                return result;
+            }
+        }
+        return null;
 	}
 	
-	public RIBufferIterator<StringSearchHit[]> searchStrings(String aText) 
+	/**
+         * Returns the type of the given object.
+         */
+        public ITypeInfo getObjectType(long aId) 
+        {
+                if (DebugFlags.SKIP_OBJECTS) return null;
+                
+                long theObjectId = ObjectId.getObjectId(aId);
+                int theHostId = ObjectId.getHostId(aId);
+                ObjectsDatabase theObjectsDatabase = getObjectsDatabase(theHostId);
+                if (theObjectsDatabase == null) return null;
+
+                LoadedTypeInfo theLoadedClass = theObjectsDatabase.getLoadedClassForObject(theObjectId);
+                Utils.println("getObjectType(%d) -> %s", aId, theLoadedClass);
+                return theLoadedClass != null ? theLoadedClass.typeInfo : null;
+        }
+        
+        public Boolean isInitialized(IClassInfo aClass) {
+            
+            for (int hostId = 0; hostId < itsObjectsDatabases.size(); hostId++) {
+                ObjectsDatabase aObjectsDatabase = itsObjectsDatabases.get(hostId);
+                Boolean result = aObjectsDatabase.isInitialized(aClass);
+                if (result != null) {
+                    return result;
+                }
+            }
+            return null;
+        }
+        
+        public RIBufferIterator<StringSearchHit[]> searchStrings(String aText) 
 	{
 		if (itsStringIndexer != null)
 		{

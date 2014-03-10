@@ -191,9 +191,10 @@ public interface ILogCollector
 	 * Registers a class
 	 * @param aId Id of the class
 	 * @param aLoaderId Id of the {@link ClassLoader} that loaded the class, or 0 for null
+	 * @param initialized Whether the class has been initialized
 	 * @param aName Name of the class.
 	 */
-	public void registerClass(long aId, long aLoaderId, String aName);
+	public void registerClass(long aId, long aLoaderId, String aName, boolean initialized);
 
 	/**
 	 * Registers a class loader.

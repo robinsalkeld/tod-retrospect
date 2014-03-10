@@ -292,12 +292,12 @@ public class DispatcherCollector implements ILogCollector
 		}
 	}	
 
-	public void registerClass(long aId, long aLoaderId, String aName)
+	public void registerClass(long aId, long aLoaderId, String aName, boolean initialized)
 	{
 		balance();
 		try
 		{
-			itsWriter.sendRegisterClass(aId, aLoaderId, aName);
+			itsWriter.sendRegisterClass(aId, aLoaderId, aName, initialized);
 		}
 		catch (IOException e)
 		{

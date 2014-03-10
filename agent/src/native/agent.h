@@ -46,6 +46,8 @@ void agentClassFileLoadHook(
 
 void agentClassPrepareHook(JNIEnv* jni, jclass klass);
 
+void agentLogObjectHook(JNIEnv* jni, jobject object);
+
 bool agentShouldProcessException(JNIEnv* jni, jmethodID method);
 
 void agentException(

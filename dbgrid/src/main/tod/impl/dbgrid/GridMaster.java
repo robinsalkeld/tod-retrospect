@@ -40,6 +40,7 @@ import tod.core.DebugFlags;
 import tod.core.ILogCollector;
 import tod.core.config.TODConfig;
 import tod.core.database.browser.ILogBrowser;
+import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IMutableStructureDatabase;
 import tod.core.database.structure.IThreadInfo;
@@ -629,6 +630,27 @@ public class GridMaster implements RIGridMaster
 		return theType;
 	}
 	
+	public List<ObjectId> getInstances(final ITypeInfo aType)
+        {
+                List<List<ObjectId>> theResults = Utils.fork(getNodes(), new ITask<RINodeConnector, List<ObjectId>>()
+                {
+                        public List<ObjectId> run(RINodeConnector aInput)
+                        {
+                                return aInput.getInstances(aType);
+                        }
+                });
+                
+                List<ObjectId> theIds = null;
+                for (List<ObjectId> theResult : theResults)
+                {
+                        if (theResult == null) continue;
+                        if (theIds != null) throw new RuntimeException("type present in various nodes!");
+                        theIds = theResult;
+                }
+                
+                return theIds;
+        }
+	
 	public ObjectId getClassId(final ITypeInfo aType)
         {
                 List<ObjectId> theResults = Utils.fork(getNodes(), new ITask<RINodeConnector, ObjectId>()
@@ -648,6 +670,33 @@ public class GridMaster implements RIGridMaster
                 }
                 
                 return theId;
+        }
+	
+	public boolean isInitialized(final IClassInfo aType)
+        {
+                List<Boolean> theResults = Utils.fork(getNodes(), new ITask<RINodeConnector, Boolean>()
+                {
+                        public Boolean run(RINodeConnector aInput)
+                        {
+                                return aInput.isInitialized(aType);
+                        }
+                });
+                
+                Boolean theInitialized = null;
+                for (Boolean theResult : theResults)
+                {
+                        if (theResult == null) continue;
+                        if (theInitialized != null) throw new RuntimeException("type present in various nodes!");
+                        theInitialized = theResult;
+                }
+                
+                if (theInitialized == null) {
+                    theInitialized = false;
+                } 
+                
+                System.out.println(aType.getName() + " initialized: " + theInitialized);
+                
+                return theInitialized;
         }
 	
 	public RIBufferIterator<StringSearchHit[]> searchStrings(String aSearchText)

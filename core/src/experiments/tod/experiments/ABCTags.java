@@ -26,6 +26,7 @@ import java.awt.Dimension;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -421,6 +422,16 @@ public class ABCTags
 		}
 		
 		public int getArraySize(ObjectId aObjectId)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
+		public List<ObjectId> getInstances(ITypeInfo aType)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
+		public boolean isInitialized(IClassInfo aClass)
 		{
 			throw new UnsupportedOperationException();
 		}

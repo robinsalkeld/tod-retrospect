@@ -26,6 +26,7 @@ import java.util.List;
 
 import tod.core.config.TODConfig;
 import tod.core.database.browser.ILogBrowser;
+import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.IThreadInfo;
 import tod.core.database.structure.ITypeInfo;
@@ -178,6 +179,10 @@ public interface RIGridMaster extends IRemote, RIMonitoringServerProvider
 
 	public ObjectId getClassId(ITypeInfo aType);
 
+	public List<ObjectId> getInstances(ITypeInfo aType);
+	
+	public boolean isInitialized(IClassInfo aClass);
+	
 	/**
 	 * See {@link ILogBrowser#exec(ITask)}
 	 */

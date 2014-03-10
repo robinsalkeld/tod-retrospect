@@ -376,9 +376,9 @@ public class PrintThroughCollector implements ILogCollector
 	}
 
 	
-	public void registerClass(long aId, long aLoaderId, String aName)
+	public void registerClass(long aId, long aLoaderId, String aName, boolean initialized)
 	{
-		itsCollector.registerClass(aId, aLoaderId, aName);
+		itsCollector.registerClass(aId, aLoaderId, aName, initialized);
 	}
 
 	public void registerClassLoader(long aId, long aClassId)

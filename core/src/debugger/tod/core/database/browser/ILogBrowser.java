@@ -23,6 +23,7 @@ RSA Data Security, Inc. MD5 Message-Digest Algorithm".
 package tod.core.database.browser;
 
 import java.io.Serializable;
+import java.util.List;
 
 import tod.core.database.event.ExternalPointer;
 import tod.core.database.event.IBehaviorCallEvent;
@@ -393,4 +394,8 @@ public interface ILogBrowser
 	public Object getInitialArrayValue(ObjectId aObjectId, int index);
 	
 	public int getArraySize(ObjectId aObjectId);
+	
+	public List<ObjectId> getInstances(ITypeInfo aType);
+	
+	public boolean isInitialized(IClassInfo aClass);
 }

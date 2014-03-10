@@ -23,9 +23,11 @@ RSA Data Security, Inc. MD5 Message-Digest Algorithm".
 package tod.impl.dbgrid.dispatch;
 
 import java.io.Serializable;
+import java.util.List;
 
 import tod.core.config.TODConfig;
 import tod.core.database.browser.IEventBrowser;
+import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.ITypeInfo;
 import tod.core.database.structure.ObjectId;
@@ -100,6 +102,10 @@ public interface RINodeConnector extends IRemote, RIMonitoringServerProvider
 	public ITypeInfo getObjectType(long aId);
 	
 	public ObjectId getClassId(ITypeInfo aType);
+	
+	public List<ObjectId> getInstances(ITypeInfo aType);
+        
+	public Boolean isInitialized(IClassInfo aClass);
 	
 	/**
 	 * Searches the strings that match the given text.

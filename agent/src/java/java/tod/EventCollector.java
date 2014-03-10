@@ -769,19 +769,36 @@ public final class EventCollector
 	        if (aClass.getName().startsWith("java.tod") || aClass.getName().startsWith("tod.agent")) {
 	            return;
 	        }
-	        
-	        ThreadData theThread = getThreadData();
-            long theTimestamp = theThread.timestamp();
 
-            LowLevelEventWriter theWriter = theThread.packetStart(theTimestamp);
-            theWriter.sendClassLoaded(aClass, theTimestamp);
-            theThread.packetEnd();
+	        ThreadData theThread = getThreadData();
+	        long theTimestamp = theThread.timestamp();
+
+	        LowLevelEventWriter theWriter = theThread.packetStart(theTimestamp);
+	        theWriter.sendClassLoaded(aClass, theTimestamp);
+	        theThread.packetEnd();
 	}
 	
 	public static void logClassLoadedStatic(Object aClass) 
 	{
 	        INSTANCE.logClassLoaded((Class<?>)aClass);
 	}
+	
+	public void logObject(Object anObject) 
+        {
+                if (AgentDebugFlags.COLLECTOR_IGNORE_ALL) return;
+                
+                ThreadData theThread = getThreadData();
+                long theTimestamp = theThread.timestamp();
+    
+                LowLevelEventWriter theWriter = theThread.packetStart(theTimestamp);
+                theWriter.sendObject(theTimestamp, anObject);
+                theThread.packetEnd();
+        }
+        
+        public static void logObjectStatic(Object anObject) 
+        {
+                INSTANCE.logObject(anObject);
+        }
 	
 	/**
 	 * Returns the id of the currently called behavior (as registered).

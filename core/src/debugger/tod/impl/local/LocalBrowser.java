@@ -184,6 +184,16 @@ public class LocalBrowser implements ILogBrowser
 	        throw new UnsupportedOperationException();
 	}
 	
+	public List<ObjectId> getInstances(ITypeInfo aType)
+	{
+        	throw new UnsupportedOperationException();
+	}
+	
+	public boolean isInitialized(IClassInfo aClass) 
+	{
+	        throw new UnsupportedOperationException();
+	}
+	
 	public IEventBrowser createBrowser (IEventFilter aFilter)
 	{
 		AbstractFilter theFilter = (AbstractFilter) aFilter;

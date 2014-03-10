@@ -42,6 +42,10 @@ jvmtiEnv *gJvmti;
 t_mutex oidMutex;
 jlong oidCurrent = 1;
 
+// Set of root object tags
+jlong rootTags[1024];
+int numRootTags = 0;
+
 /* Every JVMTI interface returns an error code, which should be checked
  *   to avoid any cascading errors down the line.
  *   The interface GetErrorName() returns the actual enumeration constant
@@ -108,7 +112,6 @@ void JNICALL cbClassPrepareHook(jvmtiEnv *jvmti,
 		klass);
 }
 
-
 void JNICALL cbException(
 	jvmtiEnv *jvmti,
 	JNIEnv* jni,
@@ -174,10 +177,78 @@ void prepareAlreadyLoadedClasses(JNIEnv* jni)
 	gJvmti->Deallocate((unsigned char*) classes);
 }
 
+/*
+Returns the next free oid value.
+Thread-safe.
+*/
+jlong getNextOid()
+{
+	jlong val;
+	{
+		t_lock lock(oidMutex);
+		val = oidCurrent++;
+	}
+
+	// Include host id
+	val = (val << cfgHostBits) | cfgHostId;
+
+	// We cannot use the 64th bit.
+	if (val >> 63 != 0) fatal_error("OID overflow");
+	return val;
+}
+
+jvmtiIterationControl JNICALL storeRoot
+    (jvmtiHeapRootKind root_kind,
+     jlong class_tag,
+     jlong size,
+     jlong* tag_ptr,
+     void* user_data) {
+
+	jlong tag = *tag_ptr;
+	if (tag == 0) {
+		// Not tagged yet, assign an oid.
+		*tag_ptr = getNextOid();
+		tag = -*tag_ptr;
+	}
+
+
+	rootTags[numRootTags++] = tag;
+
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+void logAllRoots(JNIEnv* jni) {
+	numRootTags = 0;
+	jvmtiEnv *jvmti = gJvmti;
+	jvmtiError err = jvmti->IterateOverReachableObjects(storeRoot, NULL, NULL, NULL);
+	check_jvmti_error(jvmti, err, "IterateOverReachableObjects");
+
+	jobject * roots_ptr;
+	jlong * tags_ptr;
+	jint root_count;
+	err = jvmti->GetObjectsWithTags(
+				numRootTags,
+	            rootTags,
+	            &root_count,
+	            &roots_ptr,
+	            &tags_ptr);
+	check_jvmti_error(jvmti, err, "GetObjectsWithTags");
+
+	for (int i = 0; i < root_count; i++) {
+			printf("Logging root object %i\n", i);
+			agentLogObjectHook(jni, roots_ptr[i]);
+	}
+
+	// Free buffers
+	jvmti->Deallocate((unsigned char*) roots_ptr);
+	jvmti->Deallocate((unsigned char*) tags_ptr);
+}
+
 void JNICALL cbVMInit(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread)
 {
 	agentStartCapture(jni);
 	prepareAlreadyLoadedClasses(jni);
+	logAllRoots(jni);
 }
 
 /**
@@ -267,26 +338,6 @@ Agent_OnUnload(JavaVM *vm)
 
 //************************************************************************************
 
-/*
-Returns the next free oid value.
-Thread-safe.
-*/
-jlong getNextOid()
-{
-	jlong val;
-	{
-		t_lock lock(oidMutex);
-		val = oidCurrent++;
-	}
-	
-	// Include host id
-	val = (val << cfgHostBits) | cfgHostId; 
-	
-	// We cannot use the 64th bit.
-	if (val >> 63 != 0) fatal_error("OID overflow");
-	return val;
-}
-
 jlong agentimplGetObjectId(JNIEnv* jni, jobject obj)
 {
 	jvmtiError err;
@@ -306,8 +357,6 @@ jlong agentimplGetObjectId(JNIEnv* jni, jobject obj)
 	
 	return -tag;
 }
-
-
 
 #ifdef __cplusplus
 }

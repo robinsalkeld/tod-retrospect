@@ -381,11 +381,12 @@ public class HighLevelEventWriter
 		itsBuffer.writeLong(aClassId);
 	}
 
-	public void sendRegisterClass(long aId, long aLoaderId, String aName) throws IOException
+	public void sendRegisterClass(long aId, long aLoaderId, String aName, boolean initialized) throws IOException
 	{
 		sendMessageType(itsBuffer, HighLevelEventType.REGISTER_CLASS); 
 		itsBuffer.writeLong(aId);
 		itsBuffer.writeLong(aLoaderId);
+		itsBuffer.writeByte(initialized ? 1 : 0);
 		itsBuffer.writeUTF(aName);
 	}
 

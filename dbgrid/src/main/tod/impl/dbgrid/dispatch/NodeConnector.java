@@ -27,11 +27,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import tod.Util;
 import tod.core.ILogCollector;
 import tod.core.config.TODConfig;
+import tod.core.database.structure.IClassInfo;
 import tod.core.database.structure.IHostInfo;
 import tod.core.database.structure.ITypeInfo;
 import tod.core.database.structure.ObjectId;
@@ -245,10 +247,19 @@ public class NodeConnector implements RINodeConnector
 	}
 
 	public ObjectId getClassId(ITypeInfo type) 
-    {
-        return itsDatabaseNode.getClassId(type);
-    }
+        {
+            return itsDatabaseNode.getClassId(type);
+        }
 
+	public List<ObjectId> getInstances(ITypeInfo aType) 
+	{
+	    return itsDatabaseNode.getInstances(aType);
+	}
+	
+	public Boolean isInitialized(IClassInfo aClass) {
+	    return itsDatabaseNode.isInitialized(aClass);
+	}
+	
     public RIBufferIterator<StringSearchHit[]> searchStrings(String aText)
 	{
 		return itsDatabaseNode.searchStrings(aText);

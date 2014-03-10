@@ -664,31 +664,31 @@ public class RemoteStructureDatabase implements RIStructureDatabase
 
 		public LineNumberInfo[] _getBehaviorLineNumberInfo(int aBehaviorId)
 		{
-			System.out.println("Retrieving line number info for behavior: "+aBehaviorId);
+//			System.out.println("Retrieving line number info for behavior: "+aBehaviorId);
 			return itsDatabase._getBehaviorLineNumberInfo(aBehaviorId);
 		}
 
 		public List<LocalVariableInfo> _getBehaviorLocalVariableInfo(int aBehaviorId)
 		{
-			System.out.println("Retrieving local variable info for behavior: "+aBehaviorId);
+//			System.out.println("Retrieving local variable info for behavior: "+aBehaviorId);
 			return itsDatabase._getBehaviorLocalVariableInfo(aBehaviorId);
 		}
 
 		public TagMap _getBehaviorTagMap(int aBehaviorId)
 		{
-			System.out.println("Retrieving tag map for behavior: "+aBehaviorId);
+//			System.out.println("Retrieving tag map for behavior: "+aBehaviorId);
 			return itsDatabase._getBehaviorTagMap(aBehaviorId);
 		}
 		
 		public List<ProbeInfo> _getBehaviorProbes(int aBehaviorId)
 		{
-			System.out.println("Retrieving probes for behavior: "+aBehaviorId);
+//			System.out.println("Retrieving probes for behavior: "+aBehaviorId);
 			return itsDatabase._getBehaviorProbes(aBehaviorId);
 		}
 
 		public Map<String, IMutableBehaviorInfo> _getClassBehaviorsMap(int aClassId)
 		{
-			System.out.println("Retrieving behavior map for class: "+aClassId);
+//			System.out.println("Retrieving behavior map for class: "+aClassId);
 			Map<String, IMutableBehaviorInfo> theMap = itsDatabase._getClassBehaviorsMap(aClassId);
 			for (IMutableBehaviorInfo theBehavior : theMap.values()) cacheBehavior(theBehavior);
 			return theMap;
@@ -696,7 +696,7 @@ public class RemoteStructureDatabase implements RIStructureDatabase
 
 		public Map<String, IMutableFieldInfo> _getClassFieldMap(int aClassId)
 		{
-			System.out.println("Retrieving field map for class: "+aClassId);
+//			System.out.println("Retrieving field map for class: "+aClassId);
 			Map<String, IMutableFieldInfo> theMap = itsDatabase._getClassFieldMap(aClassId);
 			for (IMutableFieldInfo theField : theMap.values()) cacheField(theField);
 			return theMap;
@@ -704,19 +704,19 @@ public class RemoteStructureDatabase implements RIStructureDatabase
 
 		public byte[] _getClassBytecode(int aClassId)
 		{
-			System.out.println("Retrieving bytecode for class: "+aClassId);
+//			System.out.println("Retrieving bytecode for class: "+aClassId);
 			return itsDatabase._getClassBytecode(aClassId);
 		}
 		
 		public byte[] _getClassOriginalBytecode(int aClassId)
 		{
-			System.out.println("Retrieving original bytecode for class: "+aClassId);
+//			System.out.println("Retrieving original bytecode for class: "+aClassId);
 			return itsDatabase._getClassOriginalBytecode(aClassId);
 		}
 		
 		public String _getClassSMAP(int aClassId)
 		{
-			System.out.println("Retrieving SMAP for class: "+aClassId);
+//			System.out.println("Retrieving SMAP for class: "+aClassId);
 			return itsDatabase._getClassSMAP(aClassId);
 		}
 

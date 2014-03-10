@@ -103,6 +103,7 @@ StaticVoidMethod* TracedMethods_setTraced;
 StaticVoidMethod* TOD_enable;
 StaticVoidMethod* TOD_start;
 StaticVoidMethod* EventCollector_logClassLoadedStatic;
+StaticVoidMethod* EventCollector_logObjectStatic;
 
 // Method IDs for methods whose exceptions are ignored
 jmethodID ignoredExceptionMethods[3];
@@ -577,8 +578,24 @@ void agentClassPrepareHook(
 		}
 	}
 
-	if (propVerbose>=2) printf("Class prepare %p %p\n", EventCollector_logClassLoadedStatic, klass);
 	EventCollector_logClassLoadedStatic->invoke(jni, klass);
+}
+
+void agentLogObjectHook(JNIEnv* jni, jobject object)
+{
+	if (EventCollector_logObjectStatic == NULL)
+	{
+		if (cfgObfuscation == 1)
+		{
+			EventCollector_logObjectStatic = new StaticVoidMethod(jni, "java/todX/EventCollector", "logObjectStatic", "(Ljava/lang/Object;)V");
+		}
+		else
+		{
+			EventCollector_logObjectStatic = new StaticVoidMethod(jni, "java/tod/EventCollector", "logObjectStatic", "(Ljava/lang/Object;)V");
+		}
+	}
+
+	EventCollector_logObjectStatic->invoke(jni, object);
 }
 
 void ignoreMethod(JNIEnv* jni, int index, char* className, char* methodName, char* signature)

@@ -246,6 +246,14 @@ implements ILogBrowser, IScheduled
                 return initialState.length;
 	}
 	
+	public List<ObjectId> getInstances(ITypeInfo aType) {
+	    return itsMaster.getInstances(aType);
+	}
+	
+	public boolean isInitialized(IClassInfo aClass) {
+	    return itsMaster.isInitialized(aClass);
+	}
+	
         public long getEventsCount()
 	{
 		if (itsEventsCount == 0) updateStats(); 

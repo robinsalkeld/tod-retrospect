@@ -44,6 +44,7 @@ import static java.tod._LowLevelEventType.REGISTER_THREAD;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URLClassLoader;
 import java.tod.EventCollector;
 import java.tod.ExceptionGeneratedReceiver;
 import java.tod.ObjectIdentity;
@@ -488,6 +489,18 @@ public class LowLevelEventWriter
 		throw new UnsupportedOperationException();
 	}
 
+	public void sendObject(long aTimestamp, Object anObject)
+	{
+	        // We can't just call convertObjectByRef, since the id will have already
+	        // been generated from native code but not yet sent.
+	    
+                long theObjectId = ObjectIdentity.get(anObject);
+                itsRegisteredObjectsStack.push(theObjectId, anObject, aTimestamp);
+                itsRegisteredRefObjectsStack.push(anObject, theObjectId, anObject.getClass(), aTimestamp);
+                        
+	        sendRegisteredObjects();
+	}
+	
 	/**
 	 * Determines if the given object should be sent by value.
 	 */
@@ -826,12 +839,12 @@ public class LowLevelEventWriter
 	private void sendRegisteredRefObject(Object aObject, long aId, Class<?> aClass, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
-		if (aClass == Class.class)
-		{
-			// We have to register it explicitly now otherwise the system thinks it
-			// is already registered because it has an id.
-			sendRegisterClass(aId, (Class<?>) aObject, aTimestamp);
-		}
+//		if (aClass == Class.class)
+//		{
+//			// We have to register it explicitly now otherwise the system thinks it
+//			// is already registered because it has an id.
+//			sendRegisterClass(aId, (Class<?>) aObject, true, aTimestamp);
+//		}
 		long theClassId = getClassId(aClass, aTimestamp); 
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_REFOBJECT);
@@ -851,13 +864,13 @@ public class LowLevelEventWriter
 		if (theId < 0)
 		{
 			theId = -theId;
-			sendRegisterClass(theId, aClass, aTimestamp);
+			sendRegisterClass(theId, aClass, true, aTimestamp);
 		}
 		
 		return theId;
 	}
 	
-	private void sendRegisterClass(long aClassId, Class<?> aClass, long aTimestamp) 
+	private void sendRegisterClass(long aClassId, Class<?> aClass, boolean initialized, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
 		long theLoaderId = getClassLoaderId(aClass.getClassLoader(), aTimestamp);
@@ -866,7 +879,8 @@ public class LowLevelEventWriter
 		
 		itsBuffer.putLong(aClassId);
 		itsBuffer.putLong(theLoaderId);
-		
+		itsBuffer.put(initialized ? TRUE : FALSE);
+                
 		String theName = aClass.getName();
 		itsBuffer.putShort((short) theName.length());
 		for(int i=0;i<theName.length();i++) itsBuffer.putChar(theName.charAt(i));

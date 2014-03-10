@@ -173,12 +173,13 @@ public class LowLevelEventReader
 	{
 		long theId = ValueReader.readObjectId(aStream);
 		long theLoaderId = ValueReader.readObjectId(aStream);
+		boolean theInitialized = aStream.readByte() == 0 ? false : true;
 		
 		int theNameSize = aStream.readShort();
 		char[] theName = new char[theNameSize];
 		for(int i=0;i<theNameSize;i++) theName[i] = aStream.readChar();
 		
-		aCollector.registerClass(theId, theLoaderId, new String(theName));
+		aCollector.registerClass(theId, theLoaderId, new String(theName), theInitialized);
 	}
 	
 	private static void readRegisterClassLoader(int aThreadId, DataInput aStream, ILowLevelCollector aCollector) throws IOException

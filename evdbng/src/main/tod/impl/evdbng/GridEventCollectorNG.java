@@ -406,9 +406,9 @@ public class GridEventCollectorNG extends GridEventCollector
 		itsDatabaseNode.registerRefObject(aId, aTimestamp, aClassId);
 	}	
 	
-	public void registerClass(long aId, long aLoaderId, String aName)
+	public void registerClass(long aId, long aLoaderId, String aName, boolean anInitialized)
 	{
-		itsDatabaseNode.registerClass(aId, aLoaderId, aName);
+		itsDatabaseNode.registerClass(aId, aLoaderId, aName, anInitialized);
 	}
 
 	public void registerClassLoader(long aId, long aClassId)
