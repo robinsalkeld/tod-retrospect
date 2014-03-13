@@ -208,9 +208,8 @@ jvmtiIterationControl JNICALL storeRoot
 	if (tag == 0) {
 		// Not tagged yet, assign an oid.
 		*tag_ptr = getNextOid();
-		tag = -*tag_ptr;
+		tag = *tag_ptr;
 	}
-
 
 	rootTags[numRootTags++] = tag;
 
@@ -234,6 +233,14 @@ void logAllRoots(JNIEnv* jni) {
 	            &tags_ptr);
 	check_jvmti_error(jvmti, err, "GetObjectsWithTags");
 
+	// Unset all the tags now that we're done with using them to mark roots,
+	// so that we can use them to track object ids instead.
+	for (int i = 0; i < root_count; i++) {
+		err = jvmti->SetTag(roots_ptr[i], 0);
+		check_jvmti_error(jvmti, err, "SetTag");
+	}
+	oidCurrent = 1;
+
 	for (int i = 0; i < root_count; i++) {
 			printf("Logging root object %i\n", i);
 			agentLogObjectHook(jni, roots_ptr[i]);
@@ -247,7 +254,7 @@ void logAllRoots(JNIEnv* jni) {
 void JNICALL cbVMInit(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread)
 {
 	agentStartCapture(jni);
-	prepareAlreadyLoadedClasses(jni);
+//	prepareAlreadyLoadedClasses(jni);
 	logAllRoots(jni);
 }
 

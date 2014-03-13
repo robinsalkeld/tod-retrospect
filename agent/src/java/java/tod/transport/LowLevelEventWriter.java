@@ -52,7 +52,9 @@ import java.tod._BehaviorCallType;
 import java.tod._LowLevelEventType;
 import java.tod._Output;
 import java.tod._ValueType;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Set;
 
 import tod.agent.Command;
 import tod.agent.ObjectValue;
@@ -491,14 +493,8 @@ public class LowLevelEventWriter
 
 	public void sendObject(long aTimestamp, Object anObject)
 	{
-	        // We can't just call convertObjectByRef, since the id will have already
-	        // been generated from native code but not yet sent.
-	    
-                long theObjectId = ObjectIdentity.get(anObject);
-                itsRegisteredObjectsStack.push(theObjectId, anObject, aTimestamp);
-                itsRegisteredRefObjectsStack.push(anObject, theObjectId, anObject.getClass(), aTimestamp);
-                        
-	        sendRegisteredObjects();
+	        // Called for the side effect of registering the object if it is new.
+	        getObjectId(anObject, aTimestamp, false);
 	}
 	
 	/**
@@ -720,24 +716,29 @@ public class LowLevelEventWriter
 		// Note: remember that this is thread-safe because SocketCollector has one
 		// CollectorPacketWriter per thread.
 
-	        while (!itsRegisteredObjectsStack.isEmpty() || !itsRegisteredRefObjectsStack.isEmpty())
-	        {
-        		while (!itsRegisteredObjectsStack.isEmpty())
-        		{
-        			ObjectEntry theEntry = itsRegisteredObjectsStack.pop();
-        			sendRegisteredObject(theEntry.id, theEntry.object, theEntry.timestamp);
-        		}
-        		
-        		while (!itsRegisteredRefObjectsStack.isEmpty())
-        		{
-        			RefObjectEntry theEntry = itsRegisteredRefObjectsStack.pop();
-        			sendRegisteredRefObject(theEntry.object, theEntry.id, theEntry.cls, theEntry.timestamp);
-        		}
-	        }
+    		while (!itsRegisteredObjectsStack.isEmpty())
+    		{
+    			ObjectEntry theEntry = itsRegisteredObjectsStack.pop();
+    			sendRegisteredObject(theEntry.id, theEntry.object, theEntry.timestamp);
+    		}
+    		
+    		while (!itsRegisteredRefObjectsStack.isEmpty())
+    		{
+    			RefObjectEntry theEntry = itsRegisteredRefObjectsStack.pop();
+    			sendRegisteredRefObject(theEntry.object, theEntry.id, theEntry.cls, theEntry.timestamp);
+    		}
 	}
 
 	private void sendRegisteredObject(long aId, Object aObject, long aTimestamp) 
 	{
+	    if (aObject instanceof Class<?>) {
+	        sendRegisterClass(aId, (Class<?>) aObject, true, aTimestamp);
+	    }
+
+	    if (aObject instanceof ClassLoader) {
+	        sendRegisterClassLoader(aId, (ClassLoader) aObject, aTimestamp);
+	    }
+            
 		// We use a different buffer here because the packet might be huge.
 		itsObjectsBuffer.clear();
 		itsObjectsBuffer.position(22); // Header placeholder
@@ -761,24 +762,14 @@ public class LowLevelEventWriter
 		itsObjectsBuffer.put(isIndexable(aObject) ? (byte) 1 : (byte) 0);
 		
 		itsStream.write(itsObjectsBuffer.array(), theSize+5, true);
+		
+		// Also register its type
+		sendRegisteredRefObject(aObject, aId, aObject.getClass(), aTimestamp);
 	}
 	
 	private Object convertObjectByRef(Class<?> aDeclaredType, Object aValue, long aTimestamp) {
 	    if (aValue != null && !aDeclaredType.isPrimitive()) {
-	        long theObjectId = ObjectIdentity.get(aValue);
-                assert theObjectId != 0;
-                
-                if (theObjectId < 0)
-                {
-                        // First time this object appears, register it
-                        theObjectId = -theObjectId;
-                        itsRegisteredObjectsStack.push(theObjectId, aValue, aTimestamp);
-                        
-                        // Also register its type
-                        itsRegisteredRefObjectsStack.push(aValue, theObjectId, aValue.getClass(), aTimestamp);
-                }
-                
-                return new _ObjectId(theObjectId);
+                return new _ObjectId(getObjectId(aValue, aTimestamp, false));
             } else {
                 return aValue;
             }
@@ -794,9 +785,6 @@ public class LowLevelEventWriter
 	        return values;
 	        
 	    } else {
-	        if (aObject != null && aObject.getClass().getName().equals("java.util.HashTable")) {
-	            aObject.getClass();
-	        }
     	        ObjectValue theObjectValue = new ObjectValue(aClass.getName(), aObject instanceof Throwable);
                 _ArrayList<FieldValue> theFieldValues = new _ArrayList<FieldValue>();
                 boolean staticFields = aObject == null;
@@ -838,15 +826,8 @@ public class LowLevelEventWriter
 	
 	private void sendRegisteredRefObject(Object aObject, long aId, Class<?> aClass, long aTimestamp) 
 	{
-		// That must stay before we start using the buffer
-//		if (aClass == Class.class)
-//		{
-//			// We have to register it explicitly now otherwise the system thinks it
-//			// is already registered because it has an id.
-//			sendRegisterClass(aId, (Class<?>) aObject, true, aTimestamp);
-//		}
-		long theClassId = getClassId(aClass, aTimestamp); 
-		
+		long theClassId = getObjectId(aClass, aTimestamp, true); 
+                
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_REFOBJECT);
 		
 		itsBuffer.putLong(aId);
@@ -856,24 +837,34 @@ public class LowLevelEventWriter
 		copyBuffer();
 	}
 	
-	private long getClassId(Class<?> aClass, long aTimestamp) 
+	private long getObjectId(Object aObject, long aTimestamp, boolean sendImmediately) 
 	{
-		long theId = ObjectIdentity.get(aClass);
-		assert theId != 0;
+	        if (aObject == null) {
+	            return 0;
+	        }
+	    
+		long theObjectId = ObjectIdentity.get(aObject);
+		assert theObjectId != 0;
 		
-		if (theId < 0)
+		if (theObjectId < 0)
 		{
-			theId = -theId;
-			sendRegisterClass(theId, aClass, true, aTimestamp);
+			// First time this object appears, register it
+                        theObjectId = -theObjectId;
+                        if (aObject instanceof Class<?>) {
+                            sendRegisteredObject(theObjectId, aObject, aTimestamp);
+                        } else {
+                            itsRegisteredObjectsStack.push(theObjectId, aObject, aTimestamp);
+                        }
 		}
 		
-		return theId;
+		return theObjectId;
 	}
+	
 	
 	private void sendRegisterClass(long aClassId, Class<?> aClass, boolean initialized, long aTimestamp) 
 	{
 		// That must stay before we start using the buffer
-		long theLoaderId = getClassLoaderId(aClass.getClassLoader(), aTimestamp);
+		long theLoaderId = getObjectId(aClass.getClassLoader(), aTimestamp, true);
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_CLASS);
 		
@@ -886,32 +877,11 @@ public class LowLevelEventWriter
 		for(int i=0;i<theName.length();i++) itsBuffer.putChar(theName.charAt(i));
 		
 		copyBuffer();
-		
-		// Also send the initial state of the class' static fields
-		sendRegisteredObject(aClassId, aClass, aTimestamp);
-		sendRegisteredObjects();
-	}
-	
-	private long getClassLoaderId(ClassLoader aLoader, long aTimestamp) 
-	{
-		if (aLoader == null) return 0;
-		
-		long theId = ObjectIdentity.get(aLoader);
-		assert theId != 0;
-		
-		if (theId < 0)
-		{
-			theId = -theId;
-			sendRegisterClassLoader(theId, aLoader, aTimestamp);
-		}
-		
-		return theId;
 	}
 	
 	private void sendRegisterClassLoader(long aLoaderId, ClassLoader aLoader, long aTimestamp) 
 	{
-		// That must stay before we start using the buffer
-		long theLoaderClassId = getClassId(aLoader.getClass(), aTimestamp);
+		long theLoaderClassId = getObjectId(aLoader.getClass(), aTimestamp, true);
 		
 		sendEventType(itsBuffer, _LowLevelEventType.REGISTER_CLASSLOADER);
 		
@@ -924,7 +894,7 @@ public class LowLevelEventWriter
 	public void sendClassLoaded(Class<?> aClass, long aTimestamp) {
 	        // Called just for the side effect of registering the class state
 	        // if this is the first time we've seen it.
-	        getClassId(aClass, aTimestamp);
+	        getObjectId(aClass, aTimestamp, true);
 	}
 	
 	/**
