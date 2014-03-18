@@ -242,7 +242,6 @@ void logAllRoots(JNIEnv* jni) {
 	oidCurrent = 1;
 
 	for (int i = 0; i < root_count; i++) {
-			printf("Logging root object %i\n", i);
 			agentLogObjectHook(jni, roots_ptr[i]);
 	}
 

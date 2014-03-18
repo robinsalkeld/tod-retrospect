@@ -102,9 +102,7 @@ public abstract class ObjectsDatabase
 		long theId = aEntry.id;
 		if (theId < itsLastProcessedId)
 		{
-			itsDroppedObjects++;
-			objectDropped();
-			return;
+			throw new IllegalArgumentException("Dropping object: " + theId);
 		}
 		
 		itsLastProcessedId = theId;
@@ -140,9 +138,7 @@ public abstract class ObjectsDatabase
 		long theId = aEntry.id;
 		if (theId < itsLastRefProcessedId)
 		{
-			itsDroppedObjects++;
-			objectDropped();
-			return;
+			throw new IllegalArgumentException("Dropping object ref: " + theId + " : " + aEntry.classId);
 		}
 		
 		itsLastRefProcessedId = theId;
