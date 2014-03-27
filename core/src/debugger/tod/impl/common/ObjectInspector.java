@@ -121,6 +121,33 @@ public class ObjectInspector implements IObjectInspector
 		itsDelegate = new ObjectDelegate();
 	}
 	
+	public boolean equals(Object obj) 
+	{
+        	if (obj == null || !(obj instanceof ObjectInspector)) {
+        	    return false;
+        	}
+        	
+        	ObjectInspector other = (ObjectInspector)obj;
+        	if (itsObjectId == null) {
+        	    return other.itsObjectId == null &&
+        	            itsType.equals(other.itsType);
+        	} else {
+        	    return itsObjectId.equals(other.itsObjectId);
+        	}
+	}
+	
+	public int hashCode() 
+	{
+	        if (itsObjectId == null) 
+	        {
+	            return 17 * itsType.hashCode();
+	        } 
+	        else
+	        {
+	            return 29 * itsObjectId.hashCode();
+	        }
+	}
+	
 	public ILogBrowser getLogBrowser()
 	{
 		return itsLogBrowser;

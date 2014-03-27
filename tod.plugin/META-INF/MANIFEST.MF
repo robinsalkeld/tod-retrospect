@@ -32,4 +32,5 @@ Export-Package: tod.core.config,
  tod.core.database.structure,
  tod.core.session,
  tod.plugin,
- tod.plugin.launch
+ tod.plugin.launch,
+ tod.utils

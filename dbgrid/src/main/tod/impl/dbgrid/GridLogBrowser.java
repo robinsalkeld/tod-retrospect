@@ -91,7 +91,8 @@ implements ILogBrowser, IScheduled
 	private QueryResultCache itsQueryResultCache = new QueryResultCache();
 	private ObjectInspectorCache itsObjectInspectorCache = new ObjectInspectorCache();
 	private StaticInspectorCache itsStaticInspectorCache = new StaticInspectorCache();
-	
+	private RegisteredObjectCache itsRegisteredObjectCache = new RegisteredObjectCache();
+        
 	protected GridLogBrowser(
 			ISession aSession,
 			RIGridMaster aMaster,
@@ -204,8 +205,7 @@ implements ILogBrowser, IScheduled
 
 	private Object getRegisteredInternal(ObjectId aObjectId)
 	{
-	        Decodable theDecodable = itsMaster.getRegisteredObject(aObjectId.getId());
-                return theDecodable != null ? theDecodable.decode() : null;
+	        return itsRegisteredObjectCache.get(aObjectId).itsValue;
 	}
 	
 	public Object getInitialFieldValue(ObjectId aObjectId, IFieldInfo aField) 
@@ -221,7 +221,12 @@ implements ILogBrowser, IScheduled
         	            }
 	            }
 	        } else {
-	            initialState = (ObjectValue)getRegisteredInternal(aObjectId);
+	            Object registeredState = getRegisteredInternal(aObjectId);
+	            // Might be a java.lang.Class instance
+	            if (registeredState instanceof Object[]) {
+	                registeredState = ((Object[])registeredState)[0];
+	            }
+	            initialState = (ObjectValue)registeredState;
 	        }
 	        
 	        if (initialState != null) {
@@ -571,4 +576,40 @@ implements ILogBrowser, IScheduled
 			return (IClassInfo) aValue.getType();
 		}
 	}
+	
+	private class RegisteredObject 
+        {
+                private ObjectId itsId;
+                private Object itsValue;
+                
+                public RegisteredObject(ObjectId anId, Object aValue) 
+                {
+                    this.itsId = anId;
+                    this.itsValue = aValue;
+                }
+        }
+	
+	private class RegisteredObjectCache extends MRUBuffer<ObjectId, RegisteredObject>
+        {
+                public RegisteredObjectCache()
+                {
+                        super(1000);
+                }
+                
+                @Override
+                protected RegisteredObject fetch(ObjectId aId)
+                {
+                        Decodable theDecodable = itsMaster.getRegisteredObject(aId.getId());
+                        Object theValue = theDecodable != null ? theDecodable.decode() : null;
+                        return new RegisteredObject(aId, theValue);
+                }
+                
+                @Override
+                protected ObjectId getKey(RegisteredObject aValue)
+                {
+                        return aValue.itsId;
+                }
+                
+                
+        }
 }
