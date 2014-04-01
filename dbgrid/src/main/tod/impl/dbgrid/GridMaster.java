@@ -694,8 +694,6 @@ public class GridMaster implements RIGridMaster
                     theInitialized = false;
                 } 
                 
-                System.out.println(aType.getName() + " initialized: " + theInitialized);
-                
                 return theInitialized;
         }
 	

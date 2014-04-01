@@ -231,6 +231,16 @@ public class ABCTags
 			throw new UnsupportedOperationException();
 		}
 
+		public IEventFilter createBehaviorExitFilter()
+		{
+			throw new UnsupportedOperationException();
+		}
+		
+		public IEventFilter createBehaviorExitFilter(IBehaviorInfo aBehavior)
+		{
+			throw new UnsupportedOperationException();
+		}
+		
 		public IEventBrowser createBrowser()
 		{
 			throw new UnsupportedOperationException();

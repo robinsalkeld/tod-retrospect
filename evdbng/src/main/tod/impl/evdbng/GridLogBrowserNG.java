@@ -184,7 +184,16 @@ public class GridLogBrowserNG extends GridLogBrowser
 		}
 	}
 
+	public IEventFilter createBehaviorExitFilter()
+        {
+                return new TypeCondition(MessageType.BEHAVIOR_EXIT);
+        }
 
+        public IEventFilter createBehaviorExitFilter(IBehaviorInfo aBehavior)
+        {
+                return new BehaviorCondition(aBehavior.getId(), RoleIndexSet.ROLE_BEHAVIOR_EXIT);
+        }
+        
 	public IEventFilter createExceptionGeneratedFilter()
 	{
 		return new TypeCondition(MessageType.EXCEPTION_GENERATED);

@@ -203,6 +203,17 @@ public interface ILogBrowser
 	public IEventFilter createBehaviorCallFilter ();
 	
 	/**
+         * Creates a filter that accepts only behavior exit events
+         * related to a specific behavior.
+         */
+        public IEventFilter createBehaviorExitFilter (IBehaviorInfo aBehavior);
+        
+        /**
+         * Creates a filter that accepts only behavior exit events.
+         */
+        public IEventFilter createBehaviorExitFilter ();
+        
+        /**
 	 * Creates a filter that accepts only the instantiation of the 
 	 * given object. Note that in the case of ambiguous object id,
 	 * the filter can accept various instantiation events.

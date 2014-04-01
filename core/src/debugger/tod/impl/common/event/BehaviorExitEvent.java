@@ -24,9 +24,13 @@ package tod.impl.common.event;
 
 import tod.core.database.browser.ILogBrowser;
 import tod.core.database.event.IBehaviorExitEvent;
+import tod.core.database.structure.IBehaviorInfo;
 
 public class BehaviorExitEvent extends Event implements IBehaviorExitEvent
 {
+        // Stored separately so PredicateConditions can still read this
+        private IBehaviorInfo itsOperation;
+    
 	private boolean itsHasThrown;
 	private Object itsResult;
 
@@ -35,6 +39,17 @@ public class BehaviorExitEvent extends Event implements IBehaviorExitEvent
 		super(aLogBrowser);
 	}
 
+	@Override
+	public IBehaviorInfo getOperationBehavior() 
+	{
+        	return itsOperation;
+	}
+	
+	public void setOperationBehavior(IBehaviorInfo aOperation) 
+	{
+                itsOperation = aOperation;
+        }
+	
 	public boolean hasThrown()
 	{
 		return itsHasThrown;

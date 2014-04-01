@@ -124,6 +124,7 @@ public class GridBehaviorExitEvent extends GridEventNG
 	{
 		BehaviorExitEvent theEvent = new BehaviorExitEvent(aBrowser);
 		initEvent(aBrowser, theEvent);
+		theEvent.setOperationBehavior(getStructureDatabase().getBehavior(itsBehaviorId, true));
 		theEvent.setHasThrown(hasThrown());
 		theEvent.setResult(getResult());
 		return theEvent;

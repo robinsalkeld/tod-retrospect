@@ -59,6 +59,7 @@ import tod.impl.local.filter.AbstractFilter;
 import tod.impl.local.filter.AdviceCFlowFilter;
 import tod.impl.local.filter.AdviceSourceIdFilter;
 import tod.impl.local.filter.BehaviorCallFilter;
+import tod.impl.local.filter.BehaviorExitFilter;
 import tod.impl.local.filter.DepthFilter;
 import tod.impl.local.filter.ExceptionGeneratedFilter;
 import tod.impl.local.filter.FieldWriteFilter;
@@ -270,6 +271,14 @@ public class LocalBrowser implements ILogBrowser
 			IBehaviorInfo aExecutedBehavior)
 	{
 		throw new UnsupportedOperationException();
+	}
+	
+	public IEventFilter createBehaviorExitFilter() {
+        	return new BehaviorExitFilter(this);
+	}
+	
+	public IEventFilter createBehaviorExitFilter(IBehaviorInfo aBehavior) {
+        	return new BehaviorExitFilter(this, aBehavior);
 	}
 	
 	public IEventFilter createFieldFilter(IFieldInfo aFieldInfo)
