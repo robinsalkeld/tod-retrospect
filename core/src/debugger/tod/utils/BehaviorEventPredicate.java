@@ -40,17 +40,15 @@ public class BehaviorEventPredicate implements IEventPredicate, Serializable {
             }
         } else {
             if (aEvent instanceof IBehaviorCallEvent) {
-                behaviorInfo = ((IBehaviorCallEvent)aEvent).getCalledBehavior();
+                behaviorInfo = ((IBehaviorCallEvent)aEvent).getExecutedBehavior();
+                if (behaviorInfo == null) {
+                    // Can happen for calls into non-instrumented code
+                    return false;
+                }
             } else {
                 return false;
             }
         }
-        if (behaviorInfo == null) {
-            System.out.println("Null called behavior: " + aEvent);
-            // Can happen for calls into non-instrumented code
-            return false;
-        }
-        
         
         BehaviorKind behaviourKind = behaviorInfo.getBehaviourKind();
         if (matchConstructors) {
