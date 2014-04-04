@@ -500,7 +500,7 @@ public abstract class DatabaseNode
                 if (theObjectsDatabase == null) return null;
 
                 LoadedTypeInfo theLoadedClass = theObjectsDatabase.getLoadedClassForObject(theObjectId);
-                Utils.println("getObjectType(%d) -> %s", aId, theLoadedClass);
+//                Utils.println("getObjectType(%d) -> %s", aId, theLoadedClass);
                 return theLoadedClass != null ? theLoadedClass.typeInfo : null;
         }
         

@@ -328,6 +328,7 @@ public class ObjectInspector implements IObjectInspector
 	public void setReferenceEvent(ILogEvent aEvent)
 	{
 		itsReferenceEvent = aEvent;
+		itsBrowsersMap.clear();
 	}
 
 	public ILogEvent getReferenceEvent()
@@ -363,13 +364,14 @@ public class ObjectInspector implements IObjectInspector
 		}
 		
 		IEventBrowser theBrowser = getBrowser(aEntry);
-		theBrowser.setPreviousEvent(itsReferenceEvent);
 		
 		long thePreviousTimestamp = -1;
 		
 		while (theBrowser.hasPrevious())
 		{
 			ILogEvent theEvent = theBrowser.previous();
+			itsBrowsersMap.remove(aEntry);
+			
 			long theTimestamp = theEvent.getTimestamp();
 			
 			if (thePreviousTimestamp == -1) thePreviousTimestamp = theTimestamp;
@@ -402,6 +404,7 @@ public class ObjectInspector implements IObjectInspector
 		{
 			if (theValue.getSetter() == null) continue;
 			theBrowser.setNextEvent(theValue.getSetter());
+			itsBrowsersMap.remove(aEntry);
 			ILogEvent theNext = theBrowser.next();
 			assert theNext.equals(theValue.getSetter());
 			
@@ -427,6 +430,7 @@ public class ObjectInspector implements IObjectInspector
 		{
 			if (theValue.getSetter() == null) continue;
 			theBrowser.setPreviousEvent(theValue.getSetter());
+			itsBrowsersMap.remove(aEntry);
 			ILogEvent thePrevious = theBrowser.previous();
 			assert thePrevious.equals(theValue.getSetter());
 			
@@ -465,6 +469,9 @@ public class ObjectInspector implements IObjectInspector
 			Delegate theDelegate = getDelegate();
 			IEventFilter theFilter = theDelegate != UNAVAILABLE ? theDelegate.getFilter(aEntry) : null;
 			theBrowser = itsLogBrowser.createBrowser(theFilter);
+			if (itsReferenceEvent != null) {
+			    theBrowser.setPreviousEvent(itsReferenceEvent);
+			}
 			itsBrowsersMap.put (aEntry, theBrowser);
 		}
 		
